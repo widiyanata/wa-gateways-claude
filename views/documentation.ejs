@@ -1,0 +1,292 @@
+<!-- views/documentation.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    />
+    <style>
+      pre {
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        overflow-x: auto;
+      }
+      .endpoint {
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 1.5rem;
+      }
+      .method-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: bold;
+        min-width: 60px;
+        text-align: center;
+        margin-right: 0.5rem;
+      }
+      .get {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      .post {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .delete {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="/">WA Gateway</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="/documentation">API Docs</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/settings">Settings</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>API Documentation</h1>
+        <a href="/" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Overview</h5>
+          <p class="card-text">
+            This API allows you to interact with WhatsApp sessions to send messages, media, and
+            retrieve data. All endpoints are accessible from the local server at
+            <code>http://localhost:3000</code> (default port).
+          </p>
+          <h6>Authentication</h6>
+          <p class="card-text">
+            Since this is a local application, no authentication is required. For security, ensure
+            the application is only accessible on your local network if needed.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-4">Endpoints</h5>
+
+          <!-- Sessions Management -->
+          <h6 class="text-muted mt-4 mb-3">Session Management</h6>
+
+          <div class="endpoint">
+            <div class="d-flex align-items-center mb-2">
+              <span class="method-badge get">GET</span>
+              <code>/api/sessions</code>
+            </div>
+            <p>Get a list of all WhatsApp sessions.</p>
+            <h6>Example Response:</h6>
+            <pre>
+{
+  "success": true,
+  "data": [
+    {
+      "id": "marketing",
+      "connected": true,
+      "user": {
+        "id": "6281234567890@s.whatsapp.net",
+        "name": "John Doe"
+      }
+    }
+  ]
+}</pre
+            >
+          </div>
+
+          <div class="endpoint">
+            <div class="d-flex align-items-center mb-2">
+              <span class="method-badge post">POST</span>
+              <code>/api/sessions</code>
+            </div>
+            <p>Create a new WhatsApp session.</p>
+            <h6>Request Body:</h6>
+            <pre>
+{
+  "sessionId": "marketing"
+}</pre
+            >
+            <h6>Example Response:</h6>
+            <pre>
+{
+  "success": true,
+  "message": "Session created, waiting for QR scan"
+}</pre
+            >
+          </div>
+
+          <div class="endpoint">
+            <div class="d-flex align-items-center mb-2">
+              <span class="method-badge get">GET</span>
+              <code>/api/sessions/:sessionId/qr</code>
+            </div>
+            <p>Get the QR code for a session.</p>
+            <h6>Example Response:</h6>
+            <pre>
+{
+  "success": true,
+  "data": {
+    "qrCode": "data:image/png;base64,iVBORw0KGgoAAAA..."
+  }
+}</pre
+            >
+          </div>
+
+          <div class="endpoint">
+            <div class="d-flex align-items-center mb-2">
+              <span class="method-badge post">POST</span>
+              <code>/api/sessions/:sessionId/logout</code>
+            </div>
+            <p>Logout from a WhatsApp session.</p>
+            <h6>Example Response:</h6>
+            <pre>
+{
+  "success": true,
+  "message": "Session logged out successfully"
+}</pre
+            >
+          </div>
+
+          <div class="endpoint">
+            <div class="d-flex align-items-center mb-2">
+              <span class="method-badge delete">DELETE</span>
+              <code>/api/sessions/:sessionId</code>
+            </div>
+            <p>Delete a WhatsApp session.</p>
+            <h6>Example Response:</h6>
+            <pre>
+{
+  "success": true,
+  "message": "Session deleted successfully"
+}</pre
+            >
+          </div>
+
+          <!-- Messaging -->
+          <h6 class="text-muted mt-4 mb-3">Messaging</h6>
+
+          <div class="endpoint">
+            <div class="d-flex align-items-center mb-2">
+              <span class="method-badge post">POST</span>
+              <code>/api/send-message/:sessionId</code>
+            </div>
+            <p>Send a text message to a contact.</p>
+            <h6>Request Body:</h6>
+            <pre>
+{
+  "to": "628123456789",
+  "message": "Hello, this is a test message"
+}</pre
+            >
+            <h6>Example Response:</h6>
+            <pre>
+{
+  "success": true,
+  "data": {
+    "id": "3EB0123456",
+    "timestamp": 1679012345
+  }
+}</pre
+            >
+          </div>
+
+          <div class="endpoint">
+            <div class="d-flex align-items-center mb-2">
+              <span class="method-badge post">POST</span>
+              <code>/api/send-media/:sessionId</code>
+            </div>
+            <p>Send media message (image, video, document) to a contact.</p>
+            <h6>Request Body:</h6>
+            <pre>
+{
+  "to": "628123456789",
+  "caption": "Check this out!",
+  "mediaUrl": "https://example.com/image.jpg",
+  "mediaType": "image"
+}</pre
+            >
+            <h6>Media Types:</h6>
+            <ul>
+              <li><code>image</code> - Send image (JPG, PNG, etc.)</li>
+              <li><code>video</code> - Send video (MP4, etc.)</li>
+              <li><code>document</code> - Send document (PDF, etc.)</li>
+            </ul>
+            <h6>Example Response:</h6>
+            <pre>
+{
+  "success": true,
+  "data": {
+    "id": "3EB0123456",
+    "timestamp": 1679012345
+  }
+}</pre
+            >
+          </div>
+
+          <!-- Contacts -->
+          <h6 class="text-muted mt-4 mb-3">Contacts</h6>
+
+          <div class="endpoint">
+            <div class="d-flex align-items-center mb-2">
+              <span class="method-badge get">GET</span>
+              <code>/api/contacts/:sessionId</code>
+            </div>
+            <p>Get all contacts for a session.</p>
+            <h6>Example Response:</h6>
+            <pre>
+{
+  "success": true,
+  "data": [
+    {
+      "id": "628123456789@s.whatsapp.net",
+      "name": "John Doe",
+      "pushname": "John"
+    }
+  ]
+}</pre
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

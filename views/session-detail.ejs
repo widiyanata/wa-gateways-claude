@@ -1,0 +1,537 @@
+<!-- views/session-detail.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    />
+    <style>
+      .message-form {
+        position: sticky;
+        bottom: 0;
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-top: 1px solid #dee2e6;
+        border-radius: 0 0 0.25rem 0.25rem;
+      }
+      .message-log {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .message {
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.5rem;
+        max-width: 80%;
+      }
+      .message-received {
+        background-color: #f1f0f0;
+        align-self: flex-start;
+      }
+      .message-sent {
+        background-color: #d1f7c4;
+        align-self: flex-end;
+      }
+      .online-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+      }
+      .online {
+        background-color: #28a745;
+      }
+      .offline {
+        background-color: #dc3545;
+      }
+      .tab-content {
+        padding-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="/">WA Gateway</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/documentation">API Docs</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/settings">Settings</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 id="session-title"><%= sessionId %></h1>
+          <div id="session-status"></div>
+        </div>
+        <a href="/" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+
+      <ul class="nav nav-tabs" id="sessionTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active"
+            id="test-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#test"
+            type="button"
+            role="tab"
+          >
+            <i class="bi bi-send"></i> Test Message
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="logs-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#logs"
+            type="button"
+            role="tab"
+          >
+            <i class="bi bi-list-ul"></i> Activity Logs
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="settings-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#settings"
+            type="button"
+            role="tab"
+          >
+            <i class="bi bi-gear"></i> Session Settings
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="sessionTabsContent">
+        <!-- Test Message Tab -->
+        <div class="tab-pane fade show active" id="test" role="tabpanel">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="card-title m-0">Send Test Message</h5>
+                </div>
+                <div class="card-body">
+                  <form id="message-form">
+                    <div class="mb-3">
+                      <label for="phone" class="form-label">Phone Number</label>
+                      <div class="input-group">
+                        <span class="input-group-text">+</span>
+                        <input
+                          type="tel"
+                          class="form-control"
+                          id="phone"
+                          placeholder="e.g. 628123456789"
+                          required
+                        />
+                      </div>
+                      <small class="form-text text-muted">
+                        Enter the number with country code without + or spaces.
+                      </small>
+                    </div>
+                    <div class="mb-3">
+                      <label for="message" class="form-label">Message</label>
+                      <textarea
+                        class="form-control"
+                        id="message"
+                        rows="4"
+                        placeholder="Type your message here..."
+                        required
+                      ></textarea>
+                    </div>
+                    <div class="d-grid">
+                      <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Send Message
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="card-title m-0">Message Preview</h5>
+                </div>
+                <div class="card-body">
+                  <div class="mb-2" id="preview-recipient">
+                    <strong>To:</strong> <span id="preview-to">-</span>
+                  </div>
+                  <div class="p-3 bg-light rounded" id="preview-content">
+                    <em class="text-muted">Your message will appear here...</em>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-4">
+                <div class="card-header">
+                  <h5 class="card-title m-0">Send Media</h5>
+                </div>
+                <div class="card-body">
+                  <form id="media-form">
+                    <div class="mb-3">
+                      <label for="media-phone" class="form-label">Phone Number</label>
+                      <div class="input-group">
+                        <span class="input-group-text">+</span>
+                        <input
+                          type="tel"
+                          class="form-control"
+                          id="media-phone"
+                          placeholder="e.g. 628123456789"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="media-type" class="form-label">Media Type</label>
+                      <select class="form-select" id="media-type" required>
+                        <option value="">Select media type</option>
+                        <option value="image">Image</option>
+                        <option value="video">Video</option>
+                        <option value="document">Document</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label for="media-url" class="form-label">Media URL</label>
+                      <input
+                        type="url"
+                        class="form-control"
+                        id="media-url"
+                        placeholder="https://example.com/image.jpg"
+                        required
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="media-caption" class="form-label">Caption (optional)</label>
+                      <textarea
+                        class="form-control"
+                        id="media-caption"
+                        rows="2"
+                        placeholder="Add a caption..."
+                      ></textarea>
+                    </div>
+                    <div class="d-grid">
+                      <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-file-earmark-image"></i> Send Media
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logs Tab -->
+        <div class="tab-pane fade" id="logs" role="tabpanel">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="card-title m-0">Activity Logs</h5>
+              <button class="btn btn-sm btn-outline-secondary" id="clear-logs">
+                <i class="bi bi-trash"></i> Clear Logs
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="message-log d-flex flex-column" id="message-log">
+                <div class="text-center py-4 text-muted">
+                  <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
+                  <p class="mt-2">No activity yet. Send a message to see logs.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="tab-pane fade" id="settings" role="tabpanel">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="card-title m-0">Session Settings</h5>
+            </div>
+            <div class="card-body">
+              <div
+                class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"
+              >
+                <div>
+                  <h6 class="m-0">Logout Session</h6>
+                  <p class="text-muted m-0">Disconnect this WhatsApp session but keep its data</p>
+                </div>
+                <button class="btn btn-warning" id="logout-btn">
+                  <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="m-0">Delete Session</h6>
+                  <p class="text-muted m-0">Remove this session and all its data permanently</p>
+                </div>
+                <button class="btn btn-danger" id="delete-btn">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Status Modal -->
+    <div class="modal fade" id="statusModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="statusTitle">Message Status</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="statusMessage"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Delete Session</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete this session? This action cannot be undone.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirm-delete">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const sessionId = "<%= sessionId %>";
+      const socket = io();
+      const statusModal = new bootstrap.Modal(document.getElementById("statusModal"));
+      const deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+
+      // Load session info
+      async function loadSessionInfo() {
+        try {
+          const response = await fetch("/api/sessions");
+          const data = await response.json();
+
+          if (data.success) {
+            const session = data.data.find((s) => s.id === sessionId);
+            if (session) {
+              const status = session.connected ? "Online" : "Offline";
+              const statusClass = session.connected ? "online" : "offline";
+              document.getElementById(
+                "session-status"
+              ).innerHTML = `<span class="online-indicator ${statusClass}"></span> ${status}`;
+            } else {
+              document.getElementById("session-status").textContent = "Session not found";
+            }
+          }
+        } catch (error) {
+          console.error("Error loading session info:", error);
+        }
+      }
+      document.getElementById("message-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const phone = document.getElementById("phone").value;
+        const message = document.getElementById("message").value;
+
+        // Update preview
+        document.getElementById("preview-to").textContent = phone;
+        document.getElementById("preview-content").innerHTML = `<p>${message}</p>`;
+
+        // Send message
+        try {
+          const response = await fetch(`/api/send-message/${sessionId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: phone, message }),
+          });
+          const result = await response.json();
+          if (result.success) {
+            document.getElementById("statusTitle").textContent = "Success";
+            document.getElementById("statusMessage").textContent = "Message sent successfully.";
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          document.getElementById("statusTitle").textContent = "Error";
+          document.getElementById("statusMessage").textContent = error.message;
+        }
+        statusModal.show();
+      });
+      document.getElementById("media-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const phone = document.getElementById("media-phone").value;
+        const mediaType = document.getElementById("media-type").value;
+        const mediaUrl = document.getElementById("media-url").value;
+        const caption = document.getElementById("media-caption").value;
+
+        // Send media
+        try {
+          const response = await fetch(`/api/send-media/${sessionId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: phone, mediaUrl, mediaType, caption }),
+          });
+          const result = await response.json();
+          if (result.success) {
+            document.getElementById("statusTitle").textContent = "Success";
+            document.getElementById("statusMessage").textContent = "Media sent successfully.";
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          document.getElementById("statusTitle").textContent = "Error";
+          document.getElementById("statusMessage").textContent = error.message;
+        }
+        statusModal.show();
+      });
+
+      socket.on(`${sessionId}.message`, (message) => {
+        const logContainer = document.getElementById("message-log");
+        logContainer.innerHTML = ""; // Clear initial placeholder
+
+        message.messages.forEach((msg) => {
+          const div = document.createElement("div");
+          div.classList.add("message");
+          div.classList.add(msg.key.fromMe ? "message-sent" : "message-received");
+          div.textContent = msg.message.conversation || "No message content";
+          logContainer.prepend(div);
+        });
+      });
+
+      document.getElementById("clear-logs").addEventListener("click", () => {
+        document.getElementById("message-log").innerHTML = `
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+            <p class="mt-2">No activity yet. Send a message to see logs.</p>
+        </div>
+    `;
+      });
+      document.getElementById("logout-btn").addEventListener("click", async () => {
+        try {
+          const response = await fetch(`/api/sessions/${sessionId}/logout`, {
+            method: "POST",
+          });
+          const result = await response.json();
+          if (result.success) {
+            document.getElementById("statusTitle").textContent = "Success";
+            document.getElementById("statusMessage").textContent =
+              "Session logged out successfully.";
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          document.getElementById("statusTitle").textContent = "Error";
+          document.getElementById("statusMessage").textContent = error.message;
+        }
+        statusModal.show();
+      });
+
+      document.getElementById("delete-btn").addEventListener("click", () => {
+        deleteModal.show();
+      });
+
+      document.getElementById("confirm-delete").addEventListener("click", async () => {
+        try {
+          const response = await fetch(`/api/sessions/${sessionId}`, {
+            method: "DELETE",
+          });
+          const result = await response.json();
+          if (result.success) {
+            document.getElementById("statusTitle").textContent = "Success";
+            document.getElementById("statusMessage").textContent = "Session deleted successfully.";
+            statusModal.show();
+            window.location.href = "/";
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          document.getElementById("statusTitle").textContent = "Error";
+          document.getElementById("statusMessage").textContent = error.message;
+          statusModal.show();
+        }
+      });
+      socket.on(`qr.${sessionId}`, (data) => {
+        // Tampilkan QR code pada UI jika diperlukan
+        console.log(`QR Code for ${data.sessionId}: ${data.qrCode}`);
+      });
+
+      socket.on(`session.${sessionId}.connected`, (data) => {
+        const status = data.connected ? "Online" : "Offline";
+        const statusClass = data.connected ? "online" : "offline";
+        document.getElementById(
+          "session-status"
+        ).innerHTML = `<span class="online-indicator ${statusClass}"></span> ${status}`;
+      });
+
+      socket.on("session.update", (data) => {
+        if (data.action === "remove" && data.sessionId === sessionId) {
+          alert("Session has been removed.");
+          window.location.href = "/";
+        } else if (data.action === "update" && data.session.id === sessionId) {
+          // Update session info jika diperlukan
+        }
+      });
+
+      // Document ready
+      document.addEventListener("DOMContentLoaded", function () {
+        loadSessionInfo();
+      });
+    </script>
+  </body>
+</html>

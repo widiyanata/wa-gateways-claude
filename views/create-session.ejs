@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    />
+    <style>
+      .qr-container {
+        max-width: 300px;
+        margin: 0 auto;
+      }
+      #qrCode {
+        width: 100%;
+        height: auto;
+      }
+      .steps {
+        counter-reset: step-counter;
+        list-style-type: none;
+        padding-left: 0;
+      }
+      .steps li {
+        position: relative;
+        padding-left: 2.5rem;
+        padding-bottom: 1.5rem;
+      }
+      .steps li::before {
+        content: counter(step-counter);
+        counter-increment: step-counter;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1.8rem;
+        height: 1.8rem;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: white;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .steps li:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 0.85rem;
+        top: 1.8rem;
+        bottom: 0;
+        width: 2px;
+        background-color: #dee2e6;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="/">WA Gateway</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/documentation">API Docs</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/settings">Settings</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Create New WhatsApp Session</h1>
+        <a href="/" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Session Details</h5>
+              <form id="sessionForm">
+                <div class="mb-3">
+                  <label for="sessionId" class="form-label">Session Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="sessionId"
+                    placeholder="e.g., marketing, support, personal"
+                    required
+                  />
+                  <div class="form-text">Use only letters, numbers, hyphens, and underscores</div>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-qr-code"></i> Generate QR Code
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Connection Guide</h5>
+              <ul class="steps">
+                <li>
+                  <p>
+                    <strong>Enter a session name</strong> in the form and click "Generate QR Code".
+                  </p>
+                </li>
+                <li>
+                  <p><strong>Open WhatsApp</strong> on your phone.</p>
+                </li>
+                <li>
+                  <p>
+                    <strong>Tap Menu</strong> (three dots) or <strong>Settings</strong> and select
+                    <strong>Linked Devices</strong>.
+                  </p>
+                </li>
+                <li>
+                  <p>
+                    <strong>Tap "Link a Device"</strong> and scan the QR code displayed on this
+                    page.
+                  </p>
+                </li>
+                <li>
+                  <p>
+                    Once connected, you'll be <strong>automatically redirected</strong> to the
+                    Dashboard.
+                  </p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card" id="qrSection" style="display: none">
+            <div class="card-body text-center">
+              <h5 class="card-title">Scan This QR Code</h5>
+              <p class="card-text text-muted mb-4">
+                Open WhatsApp on your phone, go to Linked Devices, and scan this code
+              </p>
+
+              <div class="qr-container mb-3">
+                <img id="qrCode" src="" alt="QR Code" />
+              </div>
+
+              <div id="connectionStatus" class="alert alert-info">
+                <div class="spinner-border spinner-border-sm" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <span class="ms-2">Waiting for you to scan the QR code...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      let currentSessionId = null;
+
+      // Create new session and get QR code
+      async function createSession(sessionId) {
+        try {
+          const response = await fetch("/api/sessions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ sessionId }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            currentSessionId = sessionId;
+            document.getElementById("qrSection").style.display = "block";
+
+            // Listen for QR code
+            socket.on(`qr.${sessionId}`, function (data) {
+              document.getElementById("qrCode").src = data.qrCode;
+            });
+
+            // Listen for connection success
+            socket.on(`session.${sessionId}.connected`, function (data) {
+              if (data.connected) {
+                const statusEl = document.getElementById("connectionStatus");
+                statusEl.className = "alert alert-success";
+                statusEl.innerHTML =
+                  '<i class="bi bi-check-circle"></i> <span class="ms-2">Connected successfully! Redirecting to dashboard...</span>';
+
+                // Redirect to dashboard after 2 seconds
+                setTimeout(function () {
+                  window.location.href = "/";
+                }, 2000);
+              }
+            });
+          } else {
+            alert(data.error);
+          }
+        } catch (error) {
+          console.error("Error creating session:", error);
+          alert("Failed to create session. Please try again.");
+        }
+      }
+
+      // Form submission
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("sessionForm");
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const sessionId = document.getElementById("sessionId").value.trim();
+          if (sessionId) {
+            createSession(sessionId);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

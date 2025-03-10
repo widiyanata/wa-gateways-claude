@@ -181,6 +181,78 @@
                   </form>
                 </div>
               </div>
+
+              <!-- Schedule Message -->
+              <div class="card mt-4">
+                <div class="card-header">
+                  <h5 class="card-title m-0">Schedule Message</h5>
+                </div>
+                <div class="card-body">
+                  <form id="schedule-form">
+                    <div class="mb-3">
+                      <label for="schedule-phone" class="form-label">Phone Number</label>
+                      <div class="input-group">
+                        <span class="input-group-text">+</span>
+                        <input
+                          type="tel"
+                          class="form-control"
+                          id="schedule-phone"
+                          placeholder="e.g. 628123456789"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="schedule-message" class="form-label">Message</label>
+                      <textarea
+                        class="form-control"
+                        id="schedule-message"
+                        rows="3"
+                        placeholder="Type your message here..."
+                        required
+                      ></textarea>
+                    </div>
+                    <div class="mb-3">
+                      <label for="scheduled-time" class="form-label">Scheduled Time</label>
+                      <input
+                        type="datetime-local"
+                        class="form-control"
+                        id="scheduled-time"
+                        required
+                      />
+                    </div>
+                    <div class="d-grid">
+                      <button type="submit" class="btn btn-success">
+                        <i class="bi bi-calendar-plus"></i> Schedule Message
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="card-title m-0">Scheduled Messages</h5>
+                  <button class="btn btn-sm btn-outline-secondary" id="refresh-scheduled">
+                    <i class="bi bi-arrow-repeat"></i> Refresh
+                  </button>
+                </div>
+                <div class="card-body">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th scope="col">Recipient</th>
+                        <th scope="col">Message</th>
+                        <th scope="col">Scheduled Time</th>
+                        <th scope="col">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="scheduled-messages">
+                      <!-- Dinamis: Isi list pesan terjadwal -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
             <div class="col-md-6">
               <div class="card">
@@ -384,130 +456,143 @@
           console.error("Error loading session info:", error);
         }
       }
-      document.getElementById("message-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const phone = document.getElementById("phone").value;
-        const message = document.getElementById("message").value;
 
-        // Update preview
-        document.getElementById("preview-to").textContent = phone;
-        document.getElementById("preview-content").innerHTML = `<p>${message}</p>`;
-
-        // Send message
+      // Load Scheduled Messages
+      const loadScheduledMessages = async () => {
         try {
-          const response = await fetch(`/api/send-message/${sessionId}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: phone, message }),
-          });
-          const result = await response.json();
-          if (result.success) {
-            document.getElementById("statusTitle").textContent = "Success";
-            document.getElementById("statusMessage").textContent = "Message sent successfully.";
+          const response = await fetch(`/api/schedule-messages/${sessionId}`);
+          const data = await response.json();
+          if (data.success) {
+            const messages = data.data;
+            const tbody = document.getElementById("scheduled-messages");
+            tbody.innerHTML = "";
+            if (messages.length === 0) {
+              tbody.innerHTML =
+                '<tr><td colspan="4" class="text-center">No scheduled messages.</td></tr>';
+              return;
+            }
+            messages.forEach((msg) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${msg.to.replace("@s.whatsapp.net", "")}</td>
+                <td>${msg.message}</td>
+                <td>${new Date(msg.scheduledTime).toLocaleString()}</td>
+                <td>
+                  <button class="btn btn-sm btn-warning me-2 edit-schedule" data-id="${
+                    msg.id
+                  }"><i class="bi bi-pencil"></i> Edit</button>
+                  <button class="btn btn-sm btn-danger delete-schedule" data-id="${
+                    msg.id
+                  }"><i class="bi bi-trash"></i> Delete</button>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+
+            // Add event listeners for edit and delete buttons
+            document.querySelectorAll(".edit-schedule").forEach((btn) => {
+              btn.addEventListener("click", (e) => {
+                const messageId = e.target.closest("button").dataset.id;
+                // Implement edit functionality
+                // You can show a modal with a form to edit the scheduled message
+                // and handle the form submission similar to scheduling a new message
+                showEditModal(messageId);
+              });
+            });
+
+            document.querySelectorAll(".delete-schedule").forEach((btn) => {
+              btn.addEventListener("click", async (e) => {
+                const messageId = e.target.closest("button").dataset.id;
+                try {
+                  const response = await fetch(`/api/schedule-message/${sessionId}/${messageId}`, {
+                    method: "DELETE",
+                  });
+                  const result = await response.json();
+                  if (result.success) {
+                    showStatusModal("Success", "Scheduled message deleted successfully.");
+                    loadScheduledMessages();
+                  } else {
+                    throw new Error(result.error);
+                  }
+                } catch (error) {
+                  showStatusModal("Error", error.message);
+                }
+              });
+            });
           } else {
-            throw new Error(result.error);
+            throw new Error(data.error);
           }
         } catch (error) {
-          document.getElementById("statusTitle").textContent = "Error";
-          document.getElementById("statusMessage").textContent = error.message;
+          showStatusModal("Error", error.message);
         }
+      };
+
+      // Show Status Modal
+      const showStatusModal = (title, message) => {
+        document.getElementById("statusTitle").textContent = title;
+        document.getElementById("statusMessage").textContent = message;
         statusModal.show();
-      });
-      document.getElementById("media-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const phone = document.getElementById("media-phone").value;
-        const mediaType = document.getElementById("media-type").value;
-        const mediaUrl = document.getElementById("media-url").value;
-        const caption = document.getElementById("media-caption").value;
+      };
 
-        // Send media
+      // Edit Scheduled Message (Implementation Example)
+      const showEditModal = async (messageId) => {
         try {
-          const response = await fetch(`/api/send-media/${sessionId}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: phone, mediaUrl, mediaType, caption }),
-          });
-          const result = await response.json();
-          if (result.success) {
-            document.getElementById("statusTitle").textContent = "Success";
-            document.getElementById("statusMessage").textContent = "Media sent successfully.";
+          // Fetch the specific scheduled message details
+          const response = await fetch(`/api/schedule-messages/${sessionId}`);
+          const data = await response.json();
+          if (data.success) {
+            const message = data.data.find((msg) => msg.id === messageId);
+            if (message) {
+              // Populate the form with existing data
+              // Create and show a modal with a form to edit the message
+              // For simplicity, using a prompt (replace with a proper modal as needed)
+              const newTo = prompt(
+                "Enter new phone number:",
+                message.to.replace("@s.whatsapp.net", "")
+              );
+              if (newTo === null) return; // Cancelled
+              const newMessage = prompt("Enter new message:", message.message);
+              if (newMessage === null) return; // Cancelled
+              const newScheduledTime = prompt(
+                "Enter new scheduled time (YYYY-MM-DDTHH:MM):",
+                message.scheduledTime.slice(0, 16)
+              );
+              if (newScheduledTime === null) return; // Cancelled
+
+              // Send update request
+              const updateResponse = await fetch(
+                `/api/schedule-message/${sessionId}/${messageId}`,
+                {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    to: newTo,
+                    message: newMessage,
+                    scheduledTime: newScheduledTime,
+                  }),
+                }
+              );
+              const updateResult = await updateResponse.json();
+              if (updateResult.success) {
+                showStatusModal("Success", "Scheduled message updated successfully.");
+                loadScheduledMessages();
+              } else {
+                throw new Error(updateResult.error);
+              }
+            } else {
+              throw new Error("Scheduled message not found");
+            }
           } else {
-            throw new Error(result.error);
+            throw new Error(data.error);
           }
         } catch (error) {
-          document.getElementById("statusTitle").textContent = "Error";
-          document.getElementById("statusMessage").textContent = error.message;
+          showStatusModal("Error", error.message);
         }
-        statusModal.show();
-      });
+      };
 
-      socket.on(`${sessionId}.message`, (message) => {
-        const logContainer = document.getElementById("message-log");
-        logContainer.innerHTML = ""; // Clear initial placeholder
-
-        message.messages.forEach((msg) => {
-          const div = document.createElement("div");
-          div.classList.add("message");
-          div.classList.add(msg.key.fromMe ? "message-sent" : "message-received");
-          div.textContent = msg.message.conversation || "No message content";
-          logContainer.prepend(div);
-        });
-      });
-
-      document.getElementById("clear-logs").addEventListener("click", () => {
-        document.getElementById("message-log").innerHTML = `
-        <div class="text-center py-4 text-muted">
-            <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
-            <p class="mt-2">No activity yet. Send a message to see logs.</p>
-        </div>
-    `;
-      });
-      document.getElementById("logout-btn").addEventListener("click", async () => {
-        try {
-          const response = await fetch(`/api/sessions/${sessionId}/logout`, {
-            method: "POST",
-          });
-          const result = await response.json();
-          if (result.success) {
-            document.getElementById("statusTitle").textContent = "Success";
-            document.getElementById("statusMessage").textContent =
-              "Session logged out successfully.";
-          } else {
-            throw new Error(result.error);
-          }
-        } catch (error) {
-          document.getElementById("statusTitle").textContent = "Error";
-          document.getElementById("statusMessage").textContent = error.message;
-        }
-        statusModal.show();
-      });
-
-      document.getElementById("delete-btn").addEventListener("click", () => {
-        deleteModal.show();
-      });
-
-      document.getElementById("confirm-delete").addEventListener("click", async () => {
-        try {
-          const response = await fetch(`/api/sessions/${sessionId}`, {
-            method: "DELETE",
-          });
-          const result = await response.json();
-          if (result.success) {
-            document.getElementById("statusTitle").textContent = "Success";
-            document.getElementById("statusMessage").textContent = "Session deleted successfully.";
-            statusModal.show();
-            window.location.href = "/";
-          } else {
-            throw new Error(result.error);
-          }
-        } catch (error) {
-          document.getElementById("statusTitle").textContent = "Error";
-          document.getElementById("statusMessage").textContent = error.message;
-          statusModal.show();
-        }
-      });
+      // Listen for real-time updates
       socket.on(`qr.${sessionId}`, (data) => {
-        // Tampilkan QR code pada UI jika diperlukan
+        // Display QR code on UI if needed
         console.log(`QR Code for ${data.sessionId}: ${data.qrCode}`);
       });
 
@@ -524,13 +609,169 @@
           alert("Session has been removed.");
           window.location.href = "/";
         } else if (data.action === "update" && data.session.id === sessionId) {
-          // Update session info jika diperlukan
+          // Update session info if needed
         }
       });
 
       // Document ready
       document.addEventListener("DOMContentLoaded", function () {
         loadSessionInfo();
+        loadScheduledMessages();
+
+        document.getElementById("message-form").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const phone = document.getElementById("phone").value;
+          const message = document.getElementById("message").value;
+
+          // Update preview
+          document.getElementById("preview-to").textContent = phone;
+          document.getElementById("preview-content").innerHTML = `<p>${message}</p>`;
+
+          // Send message
+          try {
+            const response = await fetch(`/api/send-message/${sessionId}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ to: phone, message }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              document.getElementById("statusTitle").textContent = "Success";
+              document.getElementById("statusMessage").textContent = "Message sent successfully.";
+            } else {
+              throw new Error(result.error);
+            }
+          } catch (error) {
+            document.getElementById("statusTitle").textContent = "Error";
+            document.getElementById("statusMessage").textContent = error.message;
+          }
+          statusModal.show();
+        });
+        document.getElementById("media-form").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const phone = document.getElementById("media-phone").value;
+          const mediaType = document.getElementById("media-type").value;
+          const mediaUrl = document.getElementById("media-url").value;
+          const caption = document.getElementById("media-caption").value;
+
+          // Send media
+          try {
+            const response = await fetch(`/api/send-media/${sessionId}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ to: phone, mediaUrl, mediaType, caption }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              document.getElementById("statusTitle").textContent = "Success";
+              document.getElementById("statusMessage").textContent = "Media sent successfully.";
+            } else {
+              throw new Error(result.error);
+            }
+          } catch (error) {
+            document.getElementById("statusTitle").textContent = "Error";
+            document.getElementById("statusMessage").textContent = error.message;
+          }
+          statusModal.show();
+        });
+
+        socket.on(`${sessionId}.message`, (message) => {
+          const logContainer = document.getElementById("message-log");
+          logContainer.innerHTML = ""; // Clear initial placeholder
+
+          message.messages.forEach((msg) => {
+            const div = document.createElement("div");
+            div.classList.add("message");
+            div.classList.add(msg.key.fromMe ? "message-sent" : "message-received");
+            div.textContent = msg.message.conversation || "No message content";
+            logContainer.prepend(div);
+          });
+        });
+
+        document.getElementById("clear-logs").addEventListener("click", () => {
+          document.getElementById("message-log").innerHTML = `
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+            <p class="mt-2">No activity yet. Send a message to see logs.</p>
+        </div>
+    `;
+        });
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+          try {
+            const response = await fetch(`/api/sessions/${sessionId}/logout`, {
+              method: "POST",
+            });
+            const result = await response.json();
+            if (result.success) {
+              document.getElementById("statusTitle").textContent = "Success";
+              document.getElementById("statusMessage").textContent =
+                "Session logged out successfully.";
+            } else {
+              throw new Error(result.error);
+            }
+          } catch (error) {
+            document.getElementById("statusTitle").textContent = "Error";
+            document.getElementById("statusMessage").textContent = error.message;
+          }
+          statusModal.show();
+        });
+
+        document.getElementById("delete-btn").addEventListener("click", () => {
+          deleteModal.show();
+        });
+
+        document.getElementById("confirm-delete").addEventListener("click", async () => {
+          try {
+            const response = await fetch(`/api/sessions/${sessionId}`, {
+              method: "DELETE",
+            });
+            const result = await response.json();
+            if (result.success) {
+              document.getElementById("statusTitle").textContent = "Success";
+              document.getElementById("statusMessage").textContent =
+                "Session deleted successfully.";
+              statusModal.show();
+              window.location.href = "/";
+            } else {
+              throw new Error(result.error);
+            }
+          } catch (error) {
+            document.getElementById("statusTitle").textContent = "Error";
+            document.getElementById("statusMessage").textContent = error.message;
+            statusModal.show();
+          }
+        });
+
+        // Handle Schedule Message Form Submission
+        document.getElementById("schedule-form").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const to = document.getElementById("schedule-phone").value;
+          const message = document.getElementById("schedule-message").value;
+          const scheduledTime = document.getElementById("scheduled-time").value;
+
+          try {
+            const response = await fetch(`/api/schedule-message/${sessionId}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ to, message, scheduledTime }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              showStatusModal("Success", "Message scheduled successfully.");
+              loadScheduledMessages();
+              document.getElementById("schedule-form").reset();
+            } else {
+              throw new Error(result.error);
+            }
+          } catch (error) {
+            showStatusModal("Error", error.message);
+          }
+        });
+
+        // Refresh Scheduled Messages
+        document
+          .getElementById("refresh-scheduled")
+          .addEventListener("click", loadScheduledMessages);
       });
     </script>
   </body>

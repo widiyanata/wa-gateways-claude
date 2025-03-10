@@ -121,4 +121,67 @@ router.get("/contacts/:sessionId", async (req, res) => {
   }
 });
 
+// Schedule Message
+router.post("/schedule-message/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { to, message, scheduledTime } = req.body;
+
+    if (!to || !message || !scheduledTime) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Recipient, message, and scheduled time are required" });
+    }
+
+    const messageId = await req.sessionManager.scheduleMessage(
+      sessionId,
+      to,
+      message,
+      scheduledTime
+    );
+    res.json({ success: true, data: { messageId } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get Scheduled Messages
+router.get("/schedule-messages/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const scheduledMessages = await req.sessionManager.getScheduledMessages(sessionId);
+    res.json({ success: true, data: scheduledMessages });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Edit Scheduled Message
+router.put("/schedule-message/:sessionId/:messageId", async (req, res) => {
+  try {
+    const { sessionId, messageId } = req.params;
+    const { to, message, scheduledTime } = req.body;
+
+    const updatedMessage = await req.sessionManager.editScheduledMessage(sessionId, messageId, {
+      to,
+      message,
+      scheduledTime,
+    });
+    res.json({ success: true, data: updatedMessage });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Delete Scheduled Message
+router.delete("/schedule-message/:sessionId/:messageId", async (req, res) => {
+  try {
+    const { sessionId, messageId } = req.params;
+    await req.sessionManager.deleteScheduledMessage(sessionId, messageId);
+    res.json({ success: true, message: "Scheduled message deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

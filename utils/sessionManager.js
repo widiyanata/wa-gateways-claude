@@ -246,6 +246,127 @@ exports.createSessionManager = (io) => {
     }
   };
 
+  // Schedule message
+  const cron = require("node-cron");
+  const { v4: uuidv4 } = require("uuid");
+
+  const scheduledTasks = new Map();
+
+  const scheduleMessage = async (sessionId, to, message, scheduledTime) => {
+    const messageId = generateUniqueId();
+    const scheduledDate = new Date(scheduledTime);
+    if (isNaN(scheduledDate)) {
+      throw new Error("Invalid scheduled time");
+    }
+
+    const cronTime = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} ${scheduledDate.getDate()} ${
+      scheduledDate.getMonth() + 1
+    } *`;
+
+    const task = cron.schedule(cronTime, async () => {
+      try {
+        await sendMessage(sessionId, to, message);
+        // Update message status in storage
+        await updateScheduledMessage(sessionId, messageId, { status: "sent" });
+      } catch (error) {
+        console.error(`Failed to send scheduled message ${messageId}:`, error);
+        // Update message status to failed
+        await updateScheduledMessage(sessionId, messageId, {
+          status: "failed",
+          error: error.message,
+        });
+      } finally {
+        task.stop();
+        scheduledTasks.delete(messageId);
+        // Remove message from storage after sent or failed
+        await removeScheduledMessage(sessionId, messageId);
+      }
+    });
+
+    scheduledTasks.set(messageId, task);
+    await saveScheduledMessage(sessionId, {
+      id: messageId,
+      to,
+      message,
+      scheduledTime,
+      status: "scheduled",
+    });
+
+    return messageId;
+  };
+
+  const getScheduledMessages = async (sessionId) => {
+    return await readScheduledMessages(sessionId);
+  };
+
+  const editScheduledMessage = async (sessionId, messageId, updatedData) => {
+    const message = await updateScheduledMessage(sessionId, messageId, updatedData);
+    if (scheduledTasks.has(messageId)) {
+      scheduledTasks.get(messageId).stop();
+      scheduledTasks.delete(messageId);
+    }
+    await scheduleMessage(sessionId, message.to, message.message, message.scheduledTime);
+    return message;
+  };
+
+  const deleteScheduledMessage = async (sessionId, messageId) => {
+    if (scheduledTasks.has(messageId)) {
+      scheduledTasks.get(messageId).stop();
+      scheduledTasks.delete(messageId);
+    }
+    await removeScheduledMessage(sessionId, messageId);
+    return;
+  };
+
+  const generateUniqueId = () => {
+    return uuidv4();
+  };
+
+  const readScheduledMessages = async (sessionId) => {
+    const filePath = path.join(SESSIONS_DIR, sessionId, "scheduled-messages.json");
+    if (!(await fs.pathExists(filePath))) {
+      return [];
+    }
+    const data = await fs.readJson(filePath);
+    return data.messages;
+  };
+
+  const saveScheduledMessage = async (sessionId, message) => {
+    const filePath = path.join(SESSIONS_DIR, sessionId, "scheduled-messages.json");
+    let data = { messages: [] };
+    if (await fs.pathExists(filePath)) {
+      data = await fs.readJson(filePath);
+    }
+    data.messages.push(message);
+    await fs.writeJson(filePath, data, { spaces: 2 });
+  };
+
+  const updateScheduledMessage = async (sessionId, messageId, updatedData) => {
+    const filePath = path.join(SESSIONS_DIR, sessionId, "scheduled-messages.json");
+    if (!(await fs.pathExists(filePath))) {
+      throw new Error("No scheduled messages found");
+    }
+    const data = await fs.readJson(filePath);
+    const messageIndex = data.messages.findIndex((msg) => msg.id === messageId);
+    if (messageIndex === -1) {
+      throw new Error("Scheduled message not found");
+    }
+    data.messages[messageIndex] = { ...data.messages[messageIndex], ...updatedData };
+    await fs.writeJson(filePath, data, { spaces: 2 });
+    return data.messages[messageIndex];
+  };
+
+  const removeScheduledMessage = async (sessionId, messageId) => {
+    const filePath = path.join(SESSIONS_DIR, sessionId, "scheduled-messages.json");
+    if (!(await fs.pathExists(filePath))) {
+      throw new Error("No scheduled messages found");
+    }
+    const data = await fs.readJson(filePath);
+    data.messages = data.messages.filter((msg) => msg.id !== messageId);
+    await fs.writeJson(filePath, data, { spaces: 2 });
+    return;
+  };
+
   return {
     createSession,
     getSession,
@@ -257,5 +378,9 @@ exports.createSessionManager = (io) => {
     sendMedia,
     getContacts,
     closeAllSessions,
+    scheduleMessage,
+    getScheduledMessages,
+    editScheduledMessage,
+    deleteScheduledMessage,
   };
 };

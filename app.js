@@ -42,7 +42,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/index", (req, res) => {
-  res.render("dashboard", {
+  res.render("index", {
     title: "Index WhatsApp Gateway Dashboard",
   });
 });

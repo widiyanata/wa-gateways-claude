@@ -56,9 +56,13 @@
       .tab-content {
         padding-top: 1rem;
       }
+
+      #sessionTabs .nav-link {
+        color: #333 !important;
+      }
     </style>
   </head>
-  <body>
+  <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
         <a class="navbar-brand" href="/">WA Gateway</a>
@@ -87,294 +91,404 @@
     </nav>
 
     <div class="container py-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 id="session-title"><%= sessionId %></h1>
-          <div id="session-status"></div>
-          <img id="qrCode" src="" alt="QR Code" />
+      <div class="row">
+        <div class="col-md-12">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h1 id="session-title"><%= sessionId %></h1>
+              <div id="session-status"></div>
+              <!-- <img id="qrCode" src="#" alt="QR Code" /> -->
+            </div>
+            <a href="/" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+          </div>
         </div>
-        <a href="/" class="btn btn-outline-secondary">
-          <i class="bi bi-arrow-left"></i> Back to Dashboard
-        </a>
-      </div>
+        <div class="col-md-12">
+          <ul class="nav nav-tabs" id="sessionTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link active"
+                id="test-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#test"
+                type="button"
+                role="tab"
+              >
+                <i class="bi bi-send"></i> Send Message
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="logs-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#logs"
+                type="button"
+                role="tab"
+              >
+                <i class="bi bi-list-ul"></i> Activity Logs
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="settings-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#settings"
+                type="button"
+                role="tab"
+              >
+                <i class="bi bi-gear"></i> Session Settings
+              </button>
+            </li>
+          </ul>
 
-      <ul class="nav nav-tabs" id="sessionTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link active"
-            id="test-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#test"
-            type="button"
-            role="tab"
+          <div
+            class="tab-content bg-white p-4 rounded border border-top-0 shadow-sm"
+            id="sessionTabsContent"
           >
-            <i class="bi bi-send"></i> Test Message
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link"
-            id="logs-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#logs"
-            type="button"
-            role="tab"
-          >
-            <i class="bi bi-list-ul"></i> Activity Logs
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link"
-            id="settings-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#settings"
-            type="button"
-            role="tab"
-          >
-            <i class="bi bi-gear"></i> Session Settings
-          </button>
-        </li>
-      </ul>
+            <!-- Test Message Tab -->
+            <div class="tab-pane fade show active" id="test" role="tabpanel">
+              <div class="row">
+                <div class="col-12">
+                  <h3 class="mt-2 mb-4">Send a Messages</h3>
+                </div>
+                <div class="col-md-12">
+                  <!-- Nav tabs -->
+                  <ul class="nav nav-pills" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                      <button
+                        class="nav-link active"
+                        id="home-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#home"
+                        type="button"
+                        role="tab"
+                        aria-controls="home"
+                        aria-selected="true"
+                      >
+                        <i class="bi bi-card-text"></i>
+                        Text
+                      </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <button
+                        class="nav-link"
+                        id="messages-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#messages"
+                        type="button"
+                        role="tab"
+                        aria-controls="messages"
+                        aria-selected="false"
+                      >
+                        <i class="bi bi-images"></i>
+                        Media
+                      </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <button
+                        class="nav-link"
+                        id="profile-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#profile"
+                        type="button"
+                        role="tab"
+                        aria-controls="profile"
+                        aria-selected="false"
+                      >
+                        <i class="bi bi-clock-history"></i>
+                        Schedule
+                      </button>
+                    </li>
+                  </ul>
+                </div>
 
-      <div class="tab-content" id="sessionTabsContent">
-        <!-- Test Message Tab -->
-        <div class="tab-pane fade show active" id="test" role="tabpanel">
-          <div class="row">
-            <div class="col-md-6">
+                <div class="col-md-12">
+                  <!-- Tab panes -->
+                  <div class="tab-content">
+                    <div
+                      class="tab-pane active"
+                      id="home"
+                      role="tabpanel"
+                      aria-labelledby="home-tab"
+                    >
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="card">
+                            <div class="card-header">
+                              <h5 class="card-title m-0">Send Test Message</h5>
+                            </div>
+                            <div class="card-body">
+                              <form id="message-form">
+                                <div class="mb-3">
+                                  <label for="phone" class="form-label">Phone Number</label>
+                                  <div class="input-group">
+                                    <span class="input-group-text">+</span>
+                                    <input
+                                      type="tel"
+                                      class="form-control"
+                                      id="phone"
+                                      placeholder="e.g. 628123456789"
+                                      required
+                                    />
+                                  </div>
+                                  <small class="form-text text-muted">
+                                    Enter the number with country code without + or spaces.
+                                  </small>
+                                </div>
+                                <div class="mb-3">
+                                  <label for="message" class="form-label">Message</label>
+                                  <textarea
+                                    class="form-control"
+                                    id="message"
+                                    rows="4"
+                                    placeholder="Type your message here..."
+                                    required
+                                  ></textarea>
+                                </div>
+                                <div class="d-grid">
+                                  <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> Send Message
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="card">
+                            <div class="card-header">
+                              <h5 class="card-title m-0">Message Preview</h5>
+                            </div>
+                            <div class="card-body">
+                              <div class="mb-2" id="preview-recipient">
+                                <strong>To:</strong> <span id="preview-to">-</span>
+                              </div>
+                              <div class="p-3 bg-light rounded" id="preview-content">
+                                <em class="text-muted">Your message will appear here...</em>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="tab-pane"
+                      id="profile"
+                      role="tabpanel"
+                      aria-labelledby="profile-tab"
+                    >
+                      <!-- Schedule Message -->
+                      <div class="row">
+                        <div class="col-md-4">
+                          <div class="card mt-4">
+                            <div class="card-header">
+                              <h5 class="card-title m-0">Schedule Message</h5>
+                            </div>
+                            <div class="card-body">
+                              <form id="schedule-form">
+                                <div class="mb-3">
+                                  <label for="schedule-phone" class="form-label"
+                                    >Phone Number</label
+                                  >
+                                  <div class="input-group">
+                                    <span class="input-group-text">+</span>
+                                    <input
+                                      type="tel"
+                                      class="form-control"
+                                      id="schedule-phone"
+                                      placeholder="e.g. 628123456789"
+                                      required
+                                    />
+                                  </div>
+                                </div>
+                                <div class="mb-3">
+                                  <label for="schedule-message" class="form-label">Message</label>
+                                  <textarea
+                                    class="form-control"
+                                    id="schedule-message"
+                                    rows="3"
+                                    placeholder="Type your message here..."
+                                    required
+                                  ></textarea>
+                                </div>
+                                <div class="mb-3">
+                                  <label for="scheduled-time" class="form-label"
+                                    >Scheduled Time</label
+                                  >
+                                  <input
+                                    type="datetime-local"
+                                    class="form-control"
+                                    id="scheduled-time"
+                                    required
+                                  />
+                                </div>
+                                <div class="d-grid">
+                                  <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-calendar-plus"></i> Schedule Message
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-8">
+                          <div class="card mt-4">
+                            <div
+                              class="card-header d-flex justify-content-between align-items-center"
+                            >
+                              <h5 class="card-title m-0">Scheduled Messages</h5>
+                              <button
+                                class="btn btn-sm btn-outline-secondary"
+                                id="refresh-scheduled"
+                              >
+                                <i class="bi bi-arrow-repeat"></i> Refresh
+                              </button>
+                            </div>
+                            <div class="card-body">
+                              <table class="table table-striped">
+                                <thead>
+                                  <tr>
+                                    <th scope="col">Recipient</th>
+                                    <th scope="col">Message</th>
+                                    <th scope="col">Scheduled Time</th>
+                                    <th scope="col">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody id="scheduled-messages">
+                                  <!-- Dinamis: Isi list pesan terjadwal -->
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="tab-pane"
+                      id="messages"
+                      role="tabpanel"
+                      aria-labelledby="messages-tab"
+                    >
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="card mt-4">
+                            <div class="card-header">
+                              <h5 class="card-title m-0">Send Media</h5>
+                            </div>
+                            <div class="card-body">
+                              <form id="media-form">
+                                <div class="mb-3">
+                                  <label for="media-phone" class="form-label">Phone Number</label>
+                                  <div class="input-group">
+                                    <span class="input-group-text">+</span>
+                                    <input
+                                      type="tel"
+                                      class="form-control"
+                                      id="media-phone"
+                                      placeholder="e.g. 628123456789"
+                                      required
+                                    />
+                                  </div>
+                                </div>
+                                <div class="mb-3">
+                                  <label for="media-type" class="form-label">Media Type</label>
+                                  <select class="form-select" id="media-type" required>
+                                    <option value="">Select media type</option>
+                                    <option value="image">Image</option>
+                                    <option value="video">Video</option>
+                                    <option value="document">Document</option>
+                                  </select>
+                                </div>
+                                <div class="mb-3">
+                                  <label for="media-url" class="form-label">Media URL</label>
+                                  <input
+                                    type="url"
+                                    class="form-control"
+                                    id="media-url"
+                                    placeholder="https://example.com/image.jpg"
+                                    required
+                                  />
+                                </div>
+                                <div class="mb-3">
+                                  <label for="media-caption" class="form-label"
+                                    >Caption (optional)</label
+                                  >
+                                  <textarea
+                                    class="form-control"
+                                    id="media-caption"
+                                    rows="2"
+                                    placeholder="Add a caption..."
+                                  ></textarea>
+                                </div>
+                                <div class="d-grid">
+                                  <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-file-earmark-image"></i> Send Media
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Logs Tab -->
+            <div class="tab-pane fade" id="logs" role="tabpanel">
               <div class="card">
-                <div class="card-header">
-                  <h5 class="card-title m-0">Send Test Message</h5>
-                </div>
-                <div class="card-body">
-                  <form id="message-form">
-                    <div class="mb-3">
-                      <label for="phone" class="form-label">Phone Number</label>
-                      <div class="input-group">
-                        <span class="input-group-text">+</span>
-                        <input
-                          type="tel"
-                          class="form-control"
-                          id="phone"
-                          placeholder="e.g. 628123456789"
-                          required
-                        />
-                      </div>
-                      <small class="form-text text-muted">
-                        Enter the number with country code without + or spaces.
-                      </small>
-                    </div>
-                    <div class="mb-3">
-                      <label for="message" class="form-label">Message</label>
-                      <textarea
-                        class="form-control"
-                        id="message"
-                        rows="4"
-                        placeholder="Type your message here..."
-                        required
-                      ></textarea>
-                    </div>
-                    <div class="d-grid">
-                      <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-send"></i> Send Message
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Schedule Message -->
-              <div class="card mt-4">
-                <div class="card-header">
-                  <h5 class="card-title m-0">Schedule Message</h5>
-                </div>
-                <div class="card-body">
-                  <form id="schedule-form">
-                    <div class="mb-3">
-                      <label for="schedule-phone" class="form-label">Phone Number</label>
-                      <div class="input-group">
-                        <span class="input-group-text">+</span>
-                        <input
-                          type="tel"
-                          class="form-control"
-                          id="schedule-phone"
-                          placeholder="e.g. 628123456789"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div class="mb-3">
-                      <label for="schedule-message" class="form-label">Message</label>
-                      <textarea
-                        class="form-control"
-                        id="schedule-message"
-                        rows="3"
-                        placeholder="Type your message here..."
-                        required
-                      ></textarea>
-                    </div>
-                    <div class="mb-3">
-                      <label for="scheduled-time" class="form-label">Scheduled Time</label>
-                      <input
-                        type="datetime-local"
-                        class="form-control"
-                        id="scheduled-time"
-                        required
-                      />
-                    </div>
-                    <div class="d-grid">
-                      <button type="submit" class="btn btn-success">
-                        <i class="bi bi-calendar-plus"></i> Schedule Message
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <div class="card mt-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                  <h5 class="card-title m-0">Scheduled Messages</h5>
-                  <button class="btn btn-sm btn-outline-secondary" id="refresh-scheduled">
-                    <i class="bi bi-arrow-repeat"></i> Refresh
+                  <h5 class="card-title m-0">Activity Logs</h5>
+                  <button class="btn btn-sm btn-outline-secondary" id="clear-logs">
+                    <i class="bi bi-trash"></i> Clear Logs
                   </button>
                 </div>
                 <div class="card-body">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th scope="col">Recipient</th>
-                        <th scope="col">Message</th>
-                        <th scope="col">Scheduled Time</th>
-                        <th scope="col">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="scheduled-messages">
-                      <!-- Dinamis: Isi list pesan terjadwal -->
-                    </tbody>
-                  </table>
+                  <div class="message-log d-flex flex-column" id="message-log">
+                    <div class="text-center py-4 text-muted">
+                      <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
+                      <p class="mt-2">No activity yet. Send a message to see logs.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="col-md-6">
+
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
               <div class="card">
                 <div class="card-header">
-                  <h5 class="card-title m-0">Message Preview</h5>
+                  <h5 class="card-title m-0">Session Settings</h5>
                 </div>
                 <div class="card-body">
-                  <div class="mb-2" id="preview-recipient">
-                    <strong>To:</strong> <span id="preview-to">-</span>
+                  <div
+                    class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"
+                  >
+                    <div>
+                      <h6 class="m-0">Logout Session</h6>
+                      <p class="text-muted m-0">
+                        Disconnect this WhatsApp session but keep its data
+                      </p>
+                    </div>
+                    <button class="btn btn-warning" id="logout-btn">
+                      <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
                   </div>
-                  <div class="p-3 bg-light rounded" id="preview-content">
-                    <em class="text-muted">Your message will appear here...</em>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h6 class="m-0">Delete Session</h6>
+                      <p class="text-muted m-0">Remove this session and all its data permanently</p>
+                    </div>
+                    <button class="btn btn-danger" id="delete-btn">
+                      <i class="bi bi-trash"></i> Delete
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              <div class="card mt-4">
-                <div class="card-header">
-                  <h5 class="card-title m-0">Send Media</h5>
-                </div>
-                <div class="card-body">
-                  <form id="media-form">
-                    <div class="mb-3">
-                      <label for="media-phone" class="form-label">Phone Number</label>
-                      <div class="input-group">
-                        <span class="input-group-text">+</span>
-                        <input
-                          type="tel"
-                          class="form-control"
-                          id="media-phone"
-                          placeholder="e.g. 628123456789"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div class="mb-3">
-                      <label for="media-type" class="form-label">Media Type</label>
-                      <select class="form-select" id="media-type" required>
-                        <option value="">Select media type</option>
-                        <option value="image">Image</option>
-                        <option value="video">Video</option>
-                        <option value="document">Document</option>
-                      </select>
-                    </div>
-                    <div class="mb-3">
-                      <label for="media-url" class="form-label">Media URL</label>
-                      <input
-                        type="url"
-                        class="form-control"
-                        id="media-url"
-                        placeholder="https://example.com/image.jpg"
-                        required
-                      />
-                    </div>
-                    <div class="mb-3">
-                      <label for="media-caption" class="form-label">Caption (optional)</label>
-                      <textarea
-                        class="form-control"
-                        id="media-caption"
-                        rows="2"
-                        placeholder="Add a caption..."
-                      ></textarea>
-                    </div>
-                    <div class="d-grid">
-                      <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-file-earmark-image"></i> Send Media
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Logs Tab -->
-        <div class="tab-pane fade" id="logs" role="tabpanel">
-          <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h5 class="card-title m-0">Activity Logs</h5>
-              <button class="btn btn-sm btn-outline-secondary" id="clear-logs">
-                <i class="bi bi-trash"></i> Clear Logs
-              </button>
-            </div>
-            <div class="card-body">
-              <div class="message-log d-flex flex-column" id="message-log">
-                <div class="text-center py-4 text-muted">
-                  <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
-                  <p class="mt-2">No activity yet. Send a message to see logs.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Settings Tab -->
-        <div class="tab-pane fade" id="settings" role="tabpanel">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="card-title m-0">Session Settings</h5>
-            </div>
-            <div class="card-body">
-              <div
-                class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"
-              >
-                <div>
-                  <h6 class="m-0">Logout Session</h6>
-                  <p class="text-muted m-0">Disconnect this WhatsApp session but keep its data</p>
-                </div>
-                <button class="btn btn-warning" id="logout-btn">
-                  <i class="bi bi-box-arrow-right"></i> Logout
-                </button>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 class="m-0">Delete Session</h6>
-                  <p class="text-muted m-0">Remove this session and all its data permanently</p>
-                </div>
-                <button class="btn btn-danger" id="delete-btn">
-                  <i class="bi bi-trash"></i> Delete
-                </button>
               </div>
             </div>
           </div>

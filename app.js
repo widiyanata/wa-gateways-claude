@@ -41,6 +41,12 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/index", (req, res) => {
+  res.render("dashboard", {
+    title: "Index WhatsApp Gateway Dashboard",
+  });
+});
+
 app.get("/create-session", (req, res) => {
   res.render("create-session", {
     title: "Create New Session",
@@ -88,6 +94,7 @@ server.listen(PORT, () => {
 // Menangani process exit
 process.on("SIGINT", async () => {
   console.log("Closing application and disconnecting WhatsApp sessions...");
-  await sessionManager.closeAllSessions();
+  // remove all sessions
+  // await sessionManager.closeAllSessions();
   process.exit(0);
 });

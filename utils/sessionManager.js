@@ -44,6 +44,7 @@ exports.createSessionManager = (io) => {
     // Handle connection events
     sock.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect, qr } = update;
+      console.log("Connection update:", update);
 
       if (qr) {
         // Generate QR code as data URL
@@ -55,11 +56,17 @@ exports.createSessionManager = (io) => {
           sessionId,
           qrCode: qrDataURL,
         });
+        // Send status to frontend
+        io.emit(`session.${sessionId}.status`, {
+          message: "Re-scan QR code",
+        });
       }
 
       if (connection === "close") {
         const shouldReconnect =
           lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+
+        console.log("Disconnect reason:", lastDisconnect?.error?.output?.statusCode);
 
         if (shouldReconnect) {
           // Reconnect if not logged out

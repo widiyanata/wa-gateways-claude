@@ -36,7 +36,7 @@
       }
     </style>
   </head>
-  <body>
+  <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
         <a class="navbar-brand" href="/">WA Gateway</a>
@@ -162,7 +162,9 @@
                                 <span class="badge ${
                                   session.connected ? "bg-success" : "bg-danger"
                                 }">
-                                    ${session.connected ? "Online" : "Offline"}
+                                    ${session.connected ? "Online" : "Offline"} ${
+            session.message ? " - " + session.message : ""
+          }
                                 </span>
                             </div>
                             
@@ -249,13 +251,12 @@
         }
       }
 
-      // Socket.IO event listeners
-      socket.on("session.update", function (data) {
-        loadSessions();
-      });
-
       // Document ready
       document.addEventListener("DOMContentLoaded", function () {
+        // Socket.IO event listeners
+        socket.on("session.update", function (data) {
+          loadSessions();
+        });
         loadSessions();
 
         // Delete confirmation

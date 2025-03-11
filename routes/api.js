@@ -44,6 +44,21 @@ router.get("/sessions/:sessionId/qr", async (req, res) => {
   }
 });
 
+router.get("/session/:sessionId/refresh", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const refreshSession = await req.sessionManager.createSession(sessionId, false);
+
+    if (!refreshSession) {
+      return res.status(404).json({ success: false, error: "Cannot refresh" });
+    }
+
+    res.json({ success: true, data: { refreshSession } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Delete session
 router.delete("/sessions/:sessionId", async (req, res) => {
   try {

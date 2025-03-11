@@ -91,6 +91,7 @@
         <div>
           <h1 id="session-title"><%= sessionId %></h1>
           <div id="session-status"></div>
+          <img id="qrCode" src="" alt="QR Code" />
         </div>
         <a href="/" class="btn btn-outline-secondary">
           <i class="bi bi-arrow-left"></i> Back to Dashboard
@@ -594,6 +595,7 @@
       socket.on(`qr.${sessionId}`, (data) => {
         // Display QR code on UI if needed
         console.log(`QR Code for ${data.sessionId}: ${data.qrCode}`);
+        document.getElementById("qrCode").src = data.qrCode;
       });
 
       socket.on(`session.${sessionId}.connected`, (data) => {

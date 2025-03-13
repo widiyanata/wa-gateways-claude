@@ -128,6 +128,8 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Open your browser and go to http://localhost:${PORT}`);
+
+  sessionManager.refreshAllSessions();
 });
 
 // Menangani process exit

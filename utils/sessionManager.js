@@ -253,6 +253,20 @@ exports.createSessionManager = (io) => {
     }
   };
 
+  // Refresh All Session
+  const refreshAllSessions = async () => {
+    console.log("Refreshing all sessions...");
+    // get all sessions
+    const sessionLists = await getAllSessions();
+    console.log("sessionLists", sessionLists);
+
+    for (const sessionList of sessionLists) {
+      const { id } = sessionList;
+      console.log("id", id);
+      await createSession(id, false);
+    }
+  };
+
   // Schedule message
   const cron = require("node-cron");
   const { v4: uuidv4 } = require("uuid");
@@ -561,5 +575,6 @@ exports.createSessionManager = (io) => {
     bulkScheduleMessages,
     bulkEditScheduledMessages,
     bulkDeleteScheduledMessages,
+    refreshAllSessions,
   };
 };

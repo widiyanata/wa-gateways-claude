@@ -261,6 +261,7 @@ exports.createSessionManager = (io) => {
 
   const scheduleMessage = async (sessionId, to, message, scheduledTime) => {
     const messageId = generateUniqueId();
+    console.log("messageId", messageId);
     const scheduledDate = new Date(scheduledTime);
     if (isNaN(scheduledDate)) {
       throw new Error("Invalid scheduled time");
@@ -270,8 +271,11 @@ exports.createSessionManager = (io) => {
       scheduledDate.getMonth() + 1
     } *`;
 
+    console.log("Cron time:", cronTime);
+
     const task = cron.schedule(cronTime, async () => {
       try {
+        console.log("Sending scheduled message:", messageId);
         await sendMessage(sessionId, to, message);
         // Update message status in storage
         await updateScheduledMessage(sessionId, messageId, { status: "sent" });
@@ -344,7 +348,9 @@ exports.createSessionManager = (io) => {
     if (await fs.pathExists(filePath)) {
       data = await fs.readJson(filePath);
     }
+    console.log("data awal: ", data);
     data.messages.push(message);
+    console.log("data akhir: ", data);
     await fs.writeJson(filePath, data, { spaces: 2 });
   };
 
@@ -374,6 +380,149 @@ exports.createSessionManager = (io) => {
     return;
   };
 
+  // Bulk schedule message
+  // Add this function to your existing code
+  const bulkScheduleMessages = async (sessionId, messages) => {
+    // Validate input
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new Error("Messages must be a non-empty array");
+    }
+
+    const results = [];
+    const errors = [];
+
+    // Process each message in the array
+    for (const msg of messages) {
+      try {
+        // Validate each message object
+        if (!msg.to || !msg.message || !msg.scheduledTime) {
+          throw new Error("Each message must have 'to', 'message', and 'scheduledTime' properties");
+        }
+
+        // Schedule the individual message
+        const messageId = await scheduleMessage(sessionId, msg.to, msg.message, msg.scheduledTime);
+
+        results.push({
+          id: messageId,
+          to: msg.to,
+          scheduledTime: msg.scheduledTime,
+          status: "scheduled",
+        });
+      } catch (error) {
+        errors.push({
+          to: msg.to,
+          message: msg.message,
+          scheduledTime: msg.scheduledTime,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      success: results.length,
+      failed: errors.length,
+      successDetails: results,
+      failureDetails: errors,
+    };
+  };
+
+  // Add this function to batch edit scheduled messages
+  const bulkEditScheduledMessages = async (sessionId, updates) => {
+    if (!Array.isArray(updates) || updates.length === 0) {
+      throw new Error("Updates must be a non-empty array");
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const update of updates) {
+      try {
+        if (!update.messageId) {
+          throw new Error("Each update must have a 'messageId' property");
+        }
+
+        const updatedMessage = await editScheduledMessage(sessionId, update.messageId, {
+          to: update.to,
+          message: update.message,
+          scheduledTime: update.scheduledTime,
+        });
+
+        results.push({
+          id: update.messageId,
+          status: "updated",
+          details: updatedMessage,
+        });
+      } catch (error) {
+        errors.push({
+          messageId: update.messageId,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      success: results.length,
+      failed: errors.length,
+      successDetails: results,
+      failureDetails: errors,
+    };
+  };
+
+  // Add this function to batch delete scheduled messages
+  const bulkDeleteScheduledMessages = async (sessionId, messageIds) => {
+    if (!Array.isArray(messageIds) || messageIds.length === 0) {
+      throw new Error("MessageIds must be a non-empty array");
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const messageId of messageIds) {
+      try {
+        await deleteScheduledMessage(sessionId, messageId);
+        results.push({
+          id: messageId,
+          status: "deleted",
+        });
+      } catch (error) {
+        errors.push({
+          id: messageId,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      success: results.length,
+      failed: errors.length,
+      successDetails: results,
+      failureDetails: errors,
+    };
+  };
+
+  // Helper function to validate a batch of messages
+  const validateBulkMessages = (messages) => {
+    if (!Array.isArray(messages)) {
+      return { valid: false, error: "Input must be an array" };
+    }
+
+    if (messages.length === 0) {
+      return { valid: false, error: "Array cannot be empty" };
+    }
+
+    const invalidMessages = messages.filter((msg) => !msg.to || !msg.message || !msg.scheduledTime);
+
+    if (invalidMessages.length > 0) {
+      return {
+        valid: false,
+        error: "Some messages are missing required fields",
+        invalidCount: invalidMessages.length,
+      };
+    }
+
+    return { valid: true };
+  };
+
   return {
     createSession,
     getSession,
@@ -389,5 +538,8 @@ exports.createSessionManager = (io) => {
     getScheduledMessages,
     editScheduledMessage,
     deleteScheduledMessage,
+    bulkScheduleMessages,
+    bulkEditScheduledMessages,
+    bulkDeleteScheduledMessages,
   };
 };

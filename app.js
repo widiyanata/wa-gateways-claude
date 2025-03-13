@@ -61,6 +61,89 @@ app.get("/session/:id", (req, res) => {
   });
 });
 
+app.get("/session/:id/bulk-message", (req, res) => {
+  const sessionId = req.params.id;
+  res.render("bulk-message", {
+    title: `Bulk Message: ${sessionId}`,
+    sessionId,
+  });
+});
+
+app.post("/session/:sessionId/bulk-message", async (req, res) => {
+  try {
+    const template = req.body.template; // Template pesan dari input user
+    const { sessionId } = req.params;
+    const dataJson = JSON.parse(req.body.datajson);
+
+    function getRandomTime(
+      minHour = 0,
+      maxHour = 23,
+      minMinute = 0,
+      maxMinute = 59,
+      minSecond = 0,
+      maxSecond = 59
+    ) {
+      // Validate input ranges
+      minHour = Math.max(0, Math.min(23, minHour));
+      maxHour = Math.max(0, Math.min(23, maxHour));
+      minMinute = Math.max(0, Math.min(59, minMinute));
+      maxMinute = Math.max(0, Math.min(59, maxMinute));
+      minSecond = Math.max(0, Math.min(59, minSecond));
+      maxSecond = Math.max(0, Math.min(59, maxSecond));
+
+      // Ensure min is not greater than max
+      if (minHour > maxHour) [minHour, maxHour] = [maxHour, minHour];
+      if (minMinute > maxMinute) [minMinute, maxMinute] = [maxMinute, minMinute];
+      if (minSecond > maxSecond) [minSecond, maxSecond] = [maxSecond, minSecond];
+
+      // Generate random components within the specified ranges
+      const hours = String(Math.floor(minHour + Math.random() * (maxHour - minHour + 1))).padStart(
+        2,
+        "0"
+      );
+      const minutes = String(
+        Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
+      ).padStart(2, "0");
+      const seconds = String(
+        Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
+      ).padStart(2, "0");
+
+      return `${hours}:${minutes}:${seconds}`;
+    }
+    function renderTemplate(template, data) {
+      // Enhanced template rendering with error checking
+      return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
+        return data[key] !== undefined ? data[key] : match;
+      });
+    }
+    function formatDateToYYYYMMDD(dateString) {
+      const [day, month, year] = dateString.split("-");
+      return `${year}-${month}-${day}`;
+    }
+
+    let messages = [];
+    dataJson.forEach(async (item) => {
+      messages.push({
+        to: item.no,
+        message: renderTemplate(template, item),
+        scheduledTime: formatDateToYYYYMMDD(item.tanggal) + " " + getRandomTime(8, 17),
+      });
+    });
+
+    const result = await req.sessionManager.bulkScheduleMessages(sessionId, messages);
+    console.log("bulkScheduleMessages", result);
+
+    return res.json({ success: true, message: result });
+  } catch (error) {
+    console.error("Error in bulk message endpoint:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to schedule bulk messages",
+      error: error.message,
+    });
+  }
+});
+
 app.get("/documentation", (req, res) => {
   res.render("documentation", {
     title: "API Documentation",

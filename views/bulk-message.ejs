@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    />
+    <style>
+      .session-card {
+        transition: all 0.3s;
+      }
+      .session-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+      .online-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+      }
+      .online {
+        background-color: #28a745;
+      }
+      .offline {
+        background-color: #dc3545;
+      }
+    </style>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="/">WA Gateway</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="/">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/documentation">API Docs</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/settings">Settings</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+      <form action="/session/<%= sessionId %>/bulk-message" method="post">
+        <input class="form-control" type="file" id="excelFile" accept=".xlsx,.xls" />
+        <!-- <input name="file" type="file" class="form-control" /> -->
+        <textarea name="datajson" id="datajson"></textarea>
+        <textarea name="template" id="template"></textarea>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <script>
+      function excelToJson(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsBinaryString(file);
+
+          reader.onload = (event) => {
+            const data = event.target.result;
+            const workbook = XLSX.read(data, { type: "binary" });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(sheet);
+
+            console.log("Data JSON:", sheet);
+            resolve(json);
+          };
+
+          reader.onerror = (error) => reject(error);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("excelFile").addEventListener("change", async (event) => {
+          const file = event.target.files[0];
+          if (file) {
+            const jsonData = await excelToJson(file);
+            console.log(jsonData);
+            document.getElementById("datajson").value = JSON.stringify(jsonData);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

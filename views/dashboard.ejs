@@ -132,7 +132,7 @@
                             </div>
                         `;
             } else {
-              loadingIndicator.remove();
+              // loadingIndicator.remove();
               renderSessions(data.data);
             }
           }
@@ -159,13 +159,20 @@
                                     }"></span>
                                     ${session.id}
                                 </h5>
+                                <div>
                                 <span class="badge ${
                                   session.connected ? "bg-success" : "bg-danger"
                                 }">
-                                    ${session.connected ? "Online" : "Offline"} ${
+                                    ${session.connected ? "Online" : "Offline </i>"} ${
             session.message ? " - " + session.message : ""
           }
                                 </span>
+                                <a href="#" class="badge text-dark refresh-session ${
+                                  session.connected ? "d-none" : ""
+                                }" onclick="refreshSession('${session.id}')" data-id="${
+            session.id
+          }"><i class='bi bi-arrow-clockwise'></i></a>
+                                </div>
                             </div>
                             
                             <p class="card-text">
@@ -193,7 +200,7 @@
                                     <button class="btn btn-sm text-danger delete-btn" data-id="${
                                       session.id
                                     }">
-                                        <i class="bi bi-trash"></i> Delete
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
                             </div>
@@ -229,6 +236,22 @@
           const data = await response.json();
           if (data.success) {
             loadSessions();
+          }
+        } catch (error) {
+          console.error("Error logging out session:", error);
+        }
+      }
+
+      // Refresh session
+      async function refreshSession(sessionId) {
+        try {
+          const response = await fetch(`/api/session/${sessionId}/refresh`, {
+            method: "GET",
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            // loadSessions();
           }
         } catch (error) {
           console.error("Error logging out session:", error);

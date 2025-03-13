@@ -5,8 +5,20 @@ function getRandomTime(
   minMinute = 0,
   maxMinute = 59,
   minSecond = 0,
-  maxSecond = 59
+  maxSecond = 59,
+  minFutureMinutes = 3
 ) {
+  // Get current time
+  const now = new Date();
+
+  // Calculate minimum allowed time (current time + minFutureMinutes minutes)
+  const minTime = new Date(now.getTime() + minFutureMinutes * 60000);
+
+  // Extract minimum required hours, minutes, seconds from minTime
+  const minTimeHour = minTime.getHours();
+  const minTimeMinute = minTime.getMinutes();
+  const minTimeSecond = minTime.getSeconds();
+
   // Validate input ranges
   minHour = Math.max(0, Math.min(23, minHour));
   maxHour = Math.max(0, Math.min(23, maxHour));
@@ -20,17 +32,64 @@ function getRandomTime(
   if (minMinute > maxMinute) [minMinute, maxMinute] = [maxMinute, minMinute];
   if (minSecond > maxSecond) [minSecond, maxSecond] = [maxSecond, minSecond];
 
-  // Generate random components within the specified ranges
+  // Adjust min values to ensure we're not below the current time + offset
+  if (minTimeHour > minHour) {
+    minHour = minTimeHour;
+  } else if (minTimeHour === minHour) {
+    if (minTimeMinute > minMinute) {
+      minMinute = minTimeMinute;
+    } else if (minTimeMinute === minMinute) {
+      if (minTimeSecond > minSecond) {
+        minSecond = minTimeSecond;
+      }
+    }
+  }
+
+  // If min values are now greater than max values, adjust max values
+  if (minHour > maxHour) {
+    // Can't satisfy both constraints, so prioritize the future time requirement
+    maxHour = Math.min(23, minHour);
+  }
+  if (minHour === maxHour && minMinute > maxMinute) {
+    maxMinute = Math.min(59, minMinute);
+  }
+  if (minHour === maxHour && minMinute === maxMinute && minSecond > maxSecond) {
+    maxSecond = Math.min(59, minSecond);
+  }
+
+  // Generate random components within the adjusted ranges
   const hours = String(Math.floor(minHour + Math.random() * (maxHour - minHour + 1))).padStart(
     2,
     "0"
   );
-  const minutes = String(
-    Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
-  ).padStart(2, "0");
-  const seconds = String(
-    Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
-  ).padStart(2, "0");
+
+  // Handle minutes based on hour selection
+  let minutes;
+  if (parseInt(hours) === minHour) {
+    minutes = String(Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))).padStart(
+      2,
+      "0"
+    );
+  } else {
+    minutes = String(Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))).padStart(
+      2,
+      "0"
+    );
+  }
+
+  // Handle seconds based on hour and minute selection
+  let seconds;
+  if (parseInt(hours) === minHour && parseInt(minutes) === minMinute) {
+    seconds = String(Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))).padStart(
+      2,
+      "0"
+    );
+  } else {
+    seconds = String(Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))).padStart(
+      2,
+      "0"
+    );
+  }
 
   return `${hours}:${minutes}:${seconds}`;
 }

@@ -339,6 +339,7 @@ exports.createSessionManager = (io) => {
       return [];
     }
     const data = await fs.readJson(filePath);
+    console.log("CRONJOB:", cron.getTasks());
     return data.messages;
   };
 
@@ -382,7 +383,7 @@ exports.createSessionManager = (io) => {
 
   // Bulk schedule message
   // Add this function to your existing code
-  const bulkScheduleMessages = async (sessionId, messages) => {
+  const bulkScheduleMessages = async (sessionId, messages, delaySeconds = 0) => {
     // Validate input
     if (!Array.isArray(messages) || messages.length === 0) {
       throw new Error("Messages must be a non-empty array");
@@ -391,22 +392,37 @@ exports.createSessionManager = (io) => {
     const results = [];
     const errors = [];
 
+    // Calculate base time for delayed messages
+    const baseTime = new Date();
+    let messageIndex = 0;
+
     // Process each message in the array
     for (const msg of messages) {
       try {
-        // Validate each message object
-        if (!msg.to || !msg.message || !msg.scheduledTime) {
-          throw new Error("Each message must have 'to', 'message', and 'scheduledTime' properties");
+        // Validate basic message structure
+        if (!msg.to || !msg.message) {
+          throw new Error("Each message must have 'to' and 'message' properties");
+        }
+
+        // Handle case where scheduledTime is not set
+        let scheduledTime = msg.scheduledTime;
+        if (!scheduledTime && delaySeconds > 0) {
+          // Calculate scheduled time based on delay
+          const delayedTime = new Date(baseTime.getTime() + delaySeconds * 1000 * messageIndex);
+          scheduledTime = delayedTime.toISOString();
+        } else if (!scheduledTime) {
+          // If no delay specified and no scheduledTime, throw error
+          throw new Error("Message must have 'scheduledTime' or a delay must be specified");
         }
 
         // Schedule the individual message
-        const messageId = await scheduleMessage(sessionId, msg.to, msg.message, msg.scheduledTime);
+        const messageId = await scheduleMessage(sessionId, msg.to, msg.message, scheduledTime);
 
         results.push({
           id: messageId,
           to: msg.to,
           message: msg.message,
-          scheduledTime: msg.scheduledTime,
+          scheduledTime: scheduledTime,
           status: "scheduled",
         });
       } catch (error) {
@@ -417,6 +433,9 @@ exports.createSessionManager = (io) => {
           error: error.message,
         });
       }
+
+      // Increment message index for delay calculations
+      messageIndex++;
     }
 
     return {

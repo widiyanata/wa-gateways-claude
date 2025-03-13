@@ -145,18 +145,22 @@
           </ul>
 
           <div
-            class="tab-content bg-white p-4 rounded border border-top-0 shadow-sm"
+            class="tab-content bg-white p-3 rounded border border-top-0 shadow-sm"
             id="sessionTabsContent"
           >
             <!-- Test Message Tab -->
             <div class="tab-pane fade show active" id="test" role="tabpanel">
               <div class="row">
                 <div class="col-12">
-                  <h3 class="mt-2 mb-4">Send a Messages</h3>
+                  <!-- <h3 class="mt-2 mb-4">Send a Messages</h3> -->
                 </div>
-                <div class="col-md-12">
+                <div class="col-md-5">
                   <!-- Nav tabs -->
-                  <ul class="nav nav-pills" id="myTab" role="tablist">
+                  <ul
+                    class="nav nav-pills nav-justified p-1 border bg-light rounded"
+                    id="myTab"
+                    role="tablist"
+                  >
                     <li class="nav-item" role="presentation">
                       <button
                         class="nav-link active"
@@ -215,7 +219,7 @@
                       aria-labelledby="home-tab"
                     >
                       <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                           <div class="card">
                             <div class="card-header">
                               <h5 class="card-title m-0">Send Test Message</h5>
@@ -257,7 +261,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-7">
                           <div class="card">
                             <div class="card-header">
                               <h5 class="card-title m-0">Message Preview</h5>
@@ -276,105 +280,13 @@
                     </div>
                     <div
                       class="tab-pane"
-                      id="profile"
-                      role="tabpanel"
-                      aria-labelledby="profile-tab"
-                    >
-                      <!-- Schedule Message -->
-                      <div class="row">
-                        <div class="col-md-4">
-                          <div class="card mt-4">
-                            <div class="card-header">
-                              <h5 class="card-title m-0">Schedule Message</h5>
-                            </div>
-                            <div class="card-body">
-                              <form id="schedule-form">
-                                <div class="mb-3">
-                                  <label for="schedule-phone" class="form-label"
-                                    >Phone Number</label
-                                  >
-                                  <div class="input-group">
-                                    <span class="input-group-text">+</span>
-                                    <input
-                                      type="tel"
-                                      class="form-control"
-                                      id="schedule-phone"
-                                      placeholder="e.g. 628123456789"
-                                      required
-                                    />
-                                  </div>
-                                </div>
-                                <div class="mb-3">
-                                  <label for="schedule-message" class="form-label">Message</label>
-                                  <textarea
-                                    class="form-control"
-                                    id="schedule-message"
-                                    rows="3"
-                                    placeholder="Type your message here..."
-                                    required
-                                  ></textarea>
-                                </div>
-                                <div class="mb-3">
-                                  <label for="scheduled-time" class="form-label"
-                                    >Scheduled Time</label
-                                  >
-                                  <input
-                                    type="datetime-local"
-                                    class="form-control"
-                                    id="scheduled-time"
-                                    required
-                                  />
-                                </div>
-                                <div class="d-grid">
-                                  <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-calendar-plus"></i> Schedule Message
-                                  </button>
-                                </div>
-                              </form>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-8">
-                          <div class="card mt-4">
-                            <div
-                              class="card-header d-flex justify-content-between align-items-center"
-                            >
-                              <h5 class="card-title m-0">Scheduled Messages</h5>
-                              <button
-                                class="btn btn-sm btn-outline-secondary"
-                                id="refresh-scheduled"
-                              >
-                                <i class="bi bi-arrow-repeat"></i> Refresh
-                              </button>
-                            </div>
-                            <div class="card-body">
-                              <table class="table table-striped">
-                                <thead>
-                                  <tr>
-                                    <th scope="col">Recipient</th>
-                                    <th scope="col">Message</th>
-                                    <th scope="col">Scheduled Time</th>
-                                    <th scope="col">Actions</th>
-                                  </tr>
-                                </thead>
-                                <tbody id="scheduled-messages">
-                                  <!-- Dinamis: Isi list pesan terjadwal -->
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      class="tab-pane"
                       id="messages"
                       role="tabpanel"
                       aria-labelledby="messages-tab"
                     >
                       <div class="row">
-                        <div class="col-md-6">
-                          <div class="card mt-4">
+                        <div class="col-md-5">
+                          <div class="card">
                             <div class="card-header">
                               <h5 class="card-title m-0">Send Media</h5>
                             </div>
@@ -433,6 +345,584 @@
                           </div>
                         </div>
                       </div>
+                    </div>
+                    <div
+                      class="tab-pane"
+                      id="profile"
+                      role="tabpanel"
+                      aria-labelledby="profile-tab"
+                    >
+                      <!-- Schedule Message -->
+                      <div class="row">
+                        <div class="col-md-5">
+                          <div class="card">
+                            <div class="card-header pb-0 border-bottom-0">
+                              <!-- Nav tabs -->
+                              <ul
+                                class="nav nav-tabs nav-fill nav-justified"
+                                id="schedule-tabs"
+                                role="tablist"
+                              >
+                                <li class="nav-item" role="presentation">
+                                  <button
+                                    class="nav-link active"
+                                    id="schedule-single-tab"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#schedule-single"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="home"
+                                    aria-selected="true"
+                                  >
+                                    Schedule Message
+                                  </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                  <button
+                                    class="nav-link"
+                                    id="schedule-bulk-tab"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#schedule-bulk"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="profile"
+                                    aria-selected="false"
+                                  >
+                                    Schedule Bulk
+                                  </button>
+                                </li>
+                              </ul>
+                            </div>
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                              <div
+                                class="tab-pane active"
+                                id="schedule-single"
+                                role="tabpanel"
+                                aria-labelledby="home-tab"
+                              >
+                                <div class="card-body">
+                                  <form id="schedule-form">
+                                    <div class="mb-3">
+                                      <label for="schedule-phone" class="form-label"
+                                        >Phone Number</label
+                                      >
+                                      <div class="input-group">
+                                        <span class="input-group-text">+</span>
+                                        <input
+                                          type="tel"
+                                          class="form-control"
+                                          id="schedule-phone"
+                                          placeholder="e.g. 628123456789"
+                                          required
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="mb-3">
+                                      <label for="schedule-message" class="form-label"
+                                        >Message</label
+                                      >
+                                      <textarea
+                                        class="form-control"
+                                        id="schedule-message"
+                                        rows="3"
+                                        placeholder="Type your message here..."
+                                        required
+                                      ></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                      <label for="scheduled-time" class="form-label"
+                                        >Scheduled Time</label
+                                      >
+                                      <input
+                                        type="datetime-local"
+                                        class="form-control"
+                                        id="scheduled-time"
+                                        required
+                                      />
+                                    </div>
+                                    <div class="d-grid">
+                                      <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-calendar-plus"></i> Schedule Message
+                                      </button>
+                                    </div>
+                                  </form>
+                                </div>
+                              </div>
+                              <div
+                                class="tab-pane"
+                                id="schedule-bulk"
+                                role="tabpanel"
+                                aria-labelledby="schedule-bulk-tab"
+                              >
+                                <div class="card-body">
+                                  <form
+                                    id="bulkMessageForm"
+                                    action="/session/<%= sessionId %>/bulk-message"
+                                    method="post"
+                                  >
+                                    <div class="mb-1">
+                                      <label for="excelFile" class="form-label"
+                                        >Upload Excel File</label
+                                      >
+                                      <input
+                                        class="form-control"
+                                        type="file"
+                                        id="excelFile"
+                                        accept=".xlsx,.xls"
+                                      />
+                                      <small class="text-muted"
+                                        >Required columns: to, name. Optional: message,
+                                        scheduledTime</small
+                                      >
+                                    </div>
+
+                                    <div class="mb-1">
+                                      <label for="template" class="form-label"
+                                        >Message Template</label
+                                      >
+                                      <textarea
+                                        name="template"
+                                        id="template"
+                                        class="form-control"
+                                        rows="4"
+                                        placeholder="Hello {{ name }}, this is your notification..."
+                                      ></textarea>
+                                      <small class="text-muted" id="parameters-info"></small>
+                                    </div>
+
+                                    <div class="mb-1">
+                                      <label class="form-label mb-0 control-label"
+                                        >Time Settings</label
+                                      >
+                                      <div class="row g-1">
+                                        <div class="col-md-3 col-6">
+                                          <label for="minHour" class="form-label">Start Hour</label>
+                                          <input
+                                            type="number"
+                                            id="minHour"
+                                            name="timeConfig[minHour]"
+                                            class="form-control"
+                                            min="0"
+                                            max="23"
+                                            value="9"
+                                          />
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                          <label for="maxHour" class="form-label">End Hour</label>
+                                          <input
+                                            type="number"
+                                            id="maxHour"
+                                            name="timeConfig[maxHour]"
+                                            class="form-control"
+                                            min="0"
+                                            max="23"
+                                            value="17"
+                                          />
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                          <label for="minMinute" class="form-label"
+                                            >Start Minute</label
+                                          >
+                                          <input
+                                            type="number"
+                                            id="minMinute"
+                                            name="timeConfig[minMinute]"
+                                            class="form-control"
+                                            min="0"
+                                            max="59"
+                                            value="0"
+                                          />
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                          <label for="maxMinute" class="form-label"
+                                            >End Minute</label
+                                          >
+                                          <input
+                                            type="number"
+                                            id="maxMinute"
+                                            name="timeConfig[maxMinute]"
+                                            class="form-control"
+                                            min="0"
+                                            max="59"
+                                            value="59"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Hidden field for JSON data -->
+                                    <input type="hidden" name="datajson" id="datajson" />
+
+                                    <div class="mb-1">
+                                      <div
+                                        class="alert alert-info"
+                                        id="uploadInfo"
+                                        style="display: none"
+                                      >
+                                        <span id="fileDetails"></span>
+                                      </div>
+                                      <div
+                                        class="alert alert-danger"
+                                        id="errorInfo"
+                                        style="display: none"
+                                      ></div>
+                                    </div>
+
+                                    <div class="mt-2">
+                                      <button
+                                        type="submit"
+                                        class="btn btn-primary"
+                                        id="submitBtn"
+                                        disabled
+                                      >
+                                        Schedule Messages
+                                      </button>
+                                      <button
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        onclick="resetForm()"
+                                      >
+                                        Reset
+                                      </button>
+                                    </div>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-7">
+                          <!-- Preview section -->
+                          <div class="card mb-4" id="previewCard" style="display: none">
+                            <div class="card-header">
+                              <h4>Data Preview</h4>
+                            </div>
+                            <div class="card-body">
+                              <div class="table-responsive">
+                                <table class="table table-striped" id="previewTable">
+                                  <thead>
+                                    <tr>
+                                      <th>#</th>
+                                      <th>To</th>
+                                      <th>Name</th>
+                                      <th>Message Preview</th>
+                                      <th>Scheduled Time</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody id="previewBody">
+                                    <!-- Preview rows will be inserted here -->
+                                  </tbody>
+                                </table>
+                              </div>
+                              <p><small>Showing up to 10 preview rows.</small></p>
+                            </div>
+                          </div>
+                          <div class="card">
+                            <div
+                              class="card-header d-flex justify-content-between align-items-center"
+                            >
+                              <h5 class="card-title m-0">Scheduled Messages</h5>
+                              <button
+                                class="btn btn-sm btn-outline-secondary"
+                                id="refresh-scheduled"
+                              >
+                                <i class="bi bi-arrow-repeat"></i> Refresh
+                              </button>
+                            </div>
+                            <div class="card-body">
+                              <table class="table table-striped">
+                                <thead>
+                                  <tr>
+                                    <th scope="col">Recipient</th>
+                                    <th scope="col">Message</th>
+                                    <th scope="col">Scheduled Time</th>
+                                    <th scope="col">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody id="scheduled-messages">
+                                  <!-- Dinamis: Isi list pesan terjadwal -->
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <script>
+                        // Load XLSX from CDN if not already included
+                        if (typeof XLSX === "undefined") {
+                          const script = document.createElement("script");
+                          script.src =
+                            "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+                          document.head.appendChild(script);
+                        }
+
+                        let excelData = [];
+
+                        function excelToJson(file) {
+                          return new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.readAsBinaryString(file);
+
+                            reader.onload = (event) => {
+                              try {
+                                const data = event.target.result;
+                                const workbook = XLSX.read(data, { type: "binary" });
+                                const sheetName = workbook.SheetNames[0];
+                                const sheet = workbook.Sheets[sheetName];
+                                const json = XLSX.utils.sheet_to_json(sheet);
+
+                                resolve(json);
+                              } catch (error) {
+                                reject(error);
+                              }
+                            };
+
+                            reader.onerror = (error) => reject(error);
+                          });
+                        }
+
+                        function validateExcelData(data) {
+                          if (!Array.isArray(data) || data.length === 0) {
+                            return {
+                              isValid: false,
+                              errors: ["Excel file is empty or has no valid data"],
+                            };
+                          }
+
+                          const firstRow = data[0];
+                          const errors = [];
+
+                          // Check required columns
+                          const hasToColumn =
+                            "to" in firstRow ||
+                            "phone" in firstRow ||
+                            "number" in firstRow ||
+                            "no" in firstRow;
+                          const hasNameColumn = "name" in firstRow || "nama" in firstRow;
+
+                          if (!hasToColumn) {
+                            errors.push(
+                              "Missing required 'to' column (alternatives: 'phone', 'number', 'no')"
+                            );
+                          }
+
+                          if (!hasNameColumn) {
+                            errors.push("Missing required 'name' column (alternative: 'nama')");
+                          }
+
+                          return {
+                            isValid: errors.length === 0,
+                            errors: errors,
+                          };
+                        }
+
+                        function renderTemplate(template, data) {
+                          return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
+                            return data[key] !== undefined ? data[key] : match;
+                          });
+                        }
+
+                        function getRandomTime(
+                          minHour = 9,
+                          maxHour = 17,
+                          minMinute = 0,
+                          maxMinute = 59
+                        ) {
+                          const hours = String(
+                            Math.floor(minHour + Math.random() * (maxHour - minHour + 1))
+                          ).padStart(2, "0");
+                          const minutes = String(
+                            Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
+                          ).padStart(2, "0");
+                          const seconds = String(Math.floor(Math.random() * 60)).padStart(2, "0");
+                          return `${hours}:${minutes}:${seconds}`;
+                        }
+
+                        function updatePreview() {
+                          if (excelData.length === 0) return;
+
+                          const previewCard = document.getElementById("previewCard");
+                          const previewBody = document.getElementById("previewBody");
+                          const template = document.getElementById("template").value;
+
+                          // Clear previous preview
+                          previewBody.innerHTML = "";
+
+                          // Get time settings
+                          const minHour = parseInt(document.getElementById("minHour").value) || 9;
+                          const maxHour = parseInt(document.getElementById("maxHour").value) || 17;
+                          const minMinute =
+                            parseInt(document.getElementById("minMinute").value) || 0;
+                          const maxMinute =
+                            parseInt(document.getElementById("maxMinute").value) || 59;
+
+                          // Show preview of up to 10 rows
+                          const previewLimit = Math.min(10, excelData.length);
+                          for (let i = 0; i < previewLimit; i++) {
+                            const row = excelData[i];
+
+                            // Get phone number from appropriate field
+                            const phone = row.to || row.phone || row.number || row.no || "";
+
+                            // Get name from appropriate field
+                            const name = row.name || row.nama || "";
+
+                            // Generate message preview
+                            const messagePreview = renderTemplate(template, row);
+
+                            // Create a sample scheduled time
+                            const now = new Date();
+                            const scheduledDate = `${now.getFullYear()}-${String(
+                              now.getMonth() + 1
+                            ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+                            const scheduledTime = `${scheduledDate} ${getRandomTime(
+                              minHour,
+                              maxHour,
+                              minMinute,
+                              maxMinute
+                            )}`;
+
+                            // Create table row
+                            const tr = document.createElement("tr");
+                            tr.innerHTML = `
+                              <td>${i + 1}</td>
+                              <td>${phone}</td>
+                              <td>${name}</td>
+                              <td>${messagePreview}</td>
+                              <td>${scheduledTime}</td>
+                            `;
+                            previewBody.appendChild(tr);
+                          }
+
+                          // Show preview card
+                          previewCard.style.display = "block";
+                        }
+
+                        function resetForm() {
+                          document.getElementById("bulkMessageForm").reset();
+                          document.getElementById("datajson").value = "";
+                          document.getElementById("uploadInfo").style.display = "none";
+                          document.getElementById("errorInfo").style.display = "none";
+                          document.getElementById("previewCard").style.display = "none";
+                          document.getElementById("submitBtn").disabled = true;
+                          excelData = [];
+                        }
+
+                        document.addEventListener("DOMContentLoaded", function () {
+                          const form = document.getElementById("bulkMessageForm");
+                          const submitBtn = document.getElementById("submitBtn");
+                          const errorInfo = document.getElementById("errorInfo");
+                          const uploadInfo = document.getElementById("uploadInfo");
+                          const templateField = document.getElementById("template");
+
+                          // Handle file upload
+                          document
+                            .getElementById("excelFile")
+                            .addEventListener("change", async (event) => {
+                              const file = event.target.files[0];
+                              if (!file) return;
+
+                              try {
+                                excelData = await excelToJson(file);
+                                const validation = validateExcelData(excelData);
+
+                                if (validation.isValid) {
+                                  // show paramaters from data
+                                  // Get all unique keys from all objects
+                                  const allKeys = [
+                                    ...new Set(excelData.flatMap((obj) => Object.keys(obj))),
+                                  ];
+
+                                  // Format as requested
+                                  const formattedOutput = `Use ${allKeys
+                                    .map((key) => `{{ ${key} }}`)
+                                    .join(", ")} to insert data from Excel.
+                                        Example: Hello {{ name }}`;
+                                  document.getElementById("parameters-info").textContent =
+                                    formattedOutput;
+
+                                  document.getElementById("datajson").value =
+                                    JSON.stringify(excelData);
+                                  document.getElementById(
+                                    "fileDetails"
+                                  ).textContent = `Loaded ${excelData.length} records from "${file.name}"`;
+                                  uploadInfo.style.display = "block";
+                                  errorInfo.style.display = "none";
+                                  submitBtn.disabled = !templateField.value.trim();
+
+                                  // Update preview if template exists
+                                  if (templateField.value.trim()) {
+                                    updatePreview();
+                                  }
+                                } else {
+                                  errorInfo.innerHTML = `<strong>Excel validation failed:</strong><ul>${validation.errors
+                                    .map((err) => `<li>${err}</li>`)
+                                    .join("")}</ul>`;
+                                  errorInfo.style.display = "block";
+                                  uploadInfo.style.display = "none";
+                                  submitBtn.disabled = true;
+                                }
+                              } catch (error) {
+                                console.error("Error processing Excel file:", error);
+                                errorInfo.textContent = `Error processing Excel file: ${error.message}`;
+                                errorInfo.style.display = "block";
+                                uploadInfo.style.display = "none";
+                                submitBtn.disabled = true;
+                              }
+                            });
+
+                          // Enable/disable submit button based on template content
+                          templateField.addEventListener("input", function () {
+                            submitBtn.disabled = !this.value.trim() || excelData.length === 0;
+
+                            // Update preview if data is loaded
+                            if (excelData.length > 0 && this.value.trim()) {
+                              updatePreview();
+                            }
+                          });
+
+                          // Update preview when time settings change
+                          document
+                            .getElementById("minHour")
+                            .addEventListener("change", updatePreview);
+                          document
+                            .getElementById("maxHour")
+                            .addEventListener("change", updatePreview);
+                          document
+                            .getElementById("minMinute")
+                            .addEventListener("change", updatePreview);
+                          document
+                            .getElementById("maxMinute")
+                            .addEventListener("change", updatePreview);
+
+                          // Handle form submission
+                          form.addEventListener("submit", function (e) {
+                            if (!templateField.value.trim() || excelData.length === 0) {
+                              e.preventDefault();
+                              errorInfo.textContent =
+                                "Please provide both an Excel file and a message template.";
+                              errorInfo.style.display = "block";
+                              return false;
+                            }
+
+                            // Add time config to the form
+                            const timeConfig = {
+                              minHour: document.getElementById("minHour").value,
+                              maxHour: document.getElementById("maxHour").value,
+                              minMinute: document.getElementById("minMinute").value,
+                              maxMinute: document.getElementById("maxMinute").value,
+                            };
+
+                            // Convert time config to JSON string and add to form data
+                            const timeConfigInput = document.createElement("input");
+                            timeConfigInput.type = "hidden";
+                            timeConfigInput.name = "timeConfig";
+                            timeConfigInput.value = JSON.stringify(timeConfig);
+                            form.appendChild(timeConfigInput);
+                          });
+                        });
+                      </script>
                     </div>
                   </div>
                 </div>
@@ -595,10 +1085,10 @@
                 <td>
                   <button class="btn btn-sm btn-warning me-2 edit-schedule" data-id="${
                     msg.id
-                  }"><i class="bi bi-pencil"></i> Edit</button>
+                  }"><i class="bi bi-pencil"></i> </button>
                   <button class="btn btn-sm btn-danger delete-schedule" data-id="${
                     msg.id
-                  }"><i class="bi bi-trash"></i> Delete</button>
+                  }"><i class="bi bi-trash"></i> </button>
                 </td>
               `;
               tbody.appendChild(tr);

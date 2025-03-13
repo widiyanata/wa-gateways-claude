@@ -405,6 +405,7 @@ exports.createSessionManager = (io) => {
         results.push({
           id: messageId,
           to: msg.to,
+          message: msg.message,
           scheduledTime: msg.scheduledTime,
           status: "scheduled",
         });

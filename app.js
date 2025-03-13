@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const fs = require("fs-extra");
 const path = require("path");
 const { createSessionManager } = require("./utils/sessionManager");
+const helpers = require("./utils/helpers");
 const apiRoutes = require("./routes/api");
 
 const app = express();
@@ -75,58 +76,13 @@ app.post("/session/:sessionId/bulk-message", async (req, res) => {
     const { sessionId } = req.params;
     const dataJson = JSON.parse(req.body.datajson);
 
-    function getRandomTime(
-      minHour = 0,
-      maxHour = 23,
-      minMinute = 0,
-      maxMinute = 59,
-      minSecond = 0,
-      maxSecond = 59
-    ) {
-      // Validate input ranges
-      minHour = Math.max(0, Math.min(23, minHour));
-      maxHour = Math.max(0, Math.min(23, maxHour));
-      minMinute = Math.max(0, Math.min(59, minMinute));
-      maxMinute = Math.max(0, Math.min(59, maxMinute));
-      minSecond = Math.max(0, Math.min(59, minSecond));
-      maxSecond = Math.max(0, Math.min(59, maxSecond));
-
-      // Ensure min is not greater than max
-      if (minHour > maxHour) [minHour, maxHour] = [maxHour, minHour];
-      if (minMinute > maxMinute) [minMinute, maxMinute] = [maxMinute, minMinute];
-      if (minSecond > maxSecond) [minSecond, maxSecond] = [maxSecond, minSecond];
-
-      // Generate random components within the specified ranges
-      const hours = String(Math.floor(minHour + Math.random() * (maxHour - minHour + 1))).padStart(
-        2,
-        "0"
-      );
-      const minutes = String(
-        Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
-      ).padStart(2, "0");
-      const seconds = String(
-        Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
-      ).padStart(2, "0");
-
-      return `${hours}:${minutes}:${seconds}`;
-    }
-    function renderTemplate(template, data) {
-      // Enhanced template rendering with error checking
-      return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
-        return data[key] !== undefined ? data[key] : match;
-      });
-    }
-    function formatDateToYYYYMMDD(dateString) {
-      const [day, month, year] = dateString.split("-");
-      return `${year}-${month}-${day}`;
-    }
-
     let messages = [];
     dataJson.forEach(async (item) => {
       messages.push({
         to: item.no,
-        message: renderTemplate(template, item),
-        scheduledTime: formatDateToYYYYMMDD(item.tanggal) + " " + getRandomTime(8, 17),
+        message: helpers.renderTemplate(template, item),
+        scheduledTime:
+          helpers.formatDateToYYYYMMDD(item.tanggal) + " " + helpers.getRandomTime(8, 16),
       });
     });
 

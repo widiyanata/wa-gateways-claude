@@ -1,0 +1,110 @@
+# WhatsApp Gateway Project Intelligence
+
+## Project Patterns
+
+### Naming Conventions
+- **Session IDs**: Alphanumeric with hyphens and underscores only (regex: `^[a-zA-Z0-9_-]+$`)
+- **File Paths**: Use path.join() for cross-platform compatibility
+- **Event Names**: Use dot notation for namespacing (e.g., `session.${sessionId}.connected`)
+- **API Endpoints**: RESTful conventions with resource-based URLs
+
+### Code Organization
+- **Module Pattern**: Core functionality is organized into modules (e.g., sessionManager)
+- **Factory Functions**: Use factory functions to create complex objects (e.g., createSessionManager)
+- **Middleware Injection**: Session manager is injected into requests via middleware
+- **Event-Driven Communication**: Socket.IO events for real-time updates
+
+### Error Handling
+- **Try-Catch Blocks**: All async operations are wrapped in try-catch blocks
+- **Error Responses**: Consistent format for error responses: `{ success: false, error: message }`
+- **Success Responses**: Consistent format for success responses: `{ success: true, data: result }`
+- **Validation**: Input validation occurs before processing operations
+
+## Implementation Details
+
+### Session Management
+- Sessions are stored in the file system under the `sessions` directory
+- Each session has its own subdirectory named after the session ID
+- Authentication state is managed by the Baileys library using the `useMultiFileAuthState` function
+- QR codes are generated using the `qrcode` library and stored in memory
+- Sessions are automatically refreshed on server startup
+
+### Message Scheduling
+- Scheduled messages use node-cron for timing
+- Cron expressions are derived from the scheduled time
+- Scheduled messages are stored in JSON files within session directories
+- Tasks are stored in memory and do not persist across server restarts
+
+### Bulk Messaging
+- Templates use a simple variable substitution system
+- Variables are enclosed in curly braces (e.g., `{name}`)
+- Data is provided in JSON format with keys matching template variables
+- Messages can be scheduled with random times within a specified range
+
+## Critical Implementation Paths
+
+### Session Creation Flow
+1. Validate session ID format
+2. Check if session already exists
+3. Create session directory
+4. Initialize authentication state
+5. Create WhatsApp socket connection
+6. Set up event handlers for connection updates
+7. Set up event handlers for credential updates
+8. Store session in the sessions map
+
+### Message Sending Flow
+1. Get session from session ID
+2. Format phone number (add @s.whatsapp.net if needed)
+3. Create message object based on message type
+4. Send message using Baileys sendMessage function
+5. Return message ID and timestamp
+
+### Scheduled Message Flow
+1. Generate unique message ID
+2. Parse scheduled time
+3. Create cron expression from scheduled time
+4. Schedule task using node-cron
+5. Store scheduled message in session's JSON file
+6. When triggered, send message and update status
+7. Remove task and message after sending
+
+## User Preferences
+
+### Project Focus
+- Simplicity and ease of use are prioritized over advanced features
+- Reliability of message delivery is a key concern
+- Minimal setup requirements for non-technical users
+- Comprehensive API for developers
+
+### Future Direction
+- AI integration for automated responses is the next major feature
+- Focus on making AI configuration simple and intuitive
+- Maintain backward compatibility with existing API
+
+## Known Challenges
+
+### WhatsApp Connection
+- WhatsApp Web protocol can change, breaking the Baileys library
+- QR code authentication requires manual scanning
+- Sessions can disconnect unexpectedly
+- Rate limiting may affect message sending
+
+### Scalability
+- In-memory scheduling limits scalability
+- File-based storage may become a bottleneck
+- Single-server architecture doesn't support load balancing
+
+## Tool Usage Patterns
+
+### Development Workflow
+- Use `npm start` for local development
+- Use `npm run build` to create standalone executable
+- Session data persists between restarts in the `sessions` directory
+- Manual testing of WhatsApp functionality requires scanning QR codes
+
+### Deployment Considerations
+- Windows executable is the primary deployment target
+- Session data should be backed up regularly
+- Server needs stable internet connection for WhatsApp Web
+- Consider firewall rules for WebSocket connections

@@ -95,6 +95,9 @@ exports.createSessionManager = (io) => {
             connected: true,
           },
         });
+
+        // Set up message history tracking
+        setupMessageStatusUpdates(sessionId, sock);
       }
     });
 
@@ -102,8 +105,68 @@ exports.createSessionManager = (io) => {
     sock.ev.on("creds.update", saveCreds);
 
     // Handle incoming messages
-    sock.ev.on("messages.upsert", (m) => {
+    sock.ev.on("messages.upsert", async (m) => {
       io.emit(`${sessionId}.message`, m);
+
+      // Save incoming messages to history as well
+      try {
+        if (m.type === "notify" && Array.isArray(m.messages)) {
+          for (const msg of m.messages) {
+            // Only process messages that are from others (not sent by us)
+            if (msg.key && !msg.key.fromMe) {
+              const sender = msg.key.remoteJid;
+              const messageContent = msg.message;
+              let content = "";
+              let mediaType = null;
+              let mediaUrl = null;
+
+              // Extract text content based on message type
+              if (messageContent?.conversation) {
+                content = messageContent.conversation;
+              } else if (messageContent?.extendedTextMessage?.text) {
+                content = messageContent.extendedTextMessage.text;
+              } else if (messageContent?.imageMessage) {
+                content = messageContent.imageMessage.caption || "";
+                mediaType = "image";
+              } else if (messageContent?.videoMessage) {
+                content = messageContent.videoMessage.caption || "";
+                mediaType = "video";
+              } else if (messageContent?.documentMessage) {
+                content = messageContent.documentMessage.fileName || "";
+                mediaType = "document";
+              } else if (messageContent?.audioMessage) {
+                content = "Audio message";
+                mediaType = "audio";
+              } else if (messageContent?.stickerMessage) {
+                content = "Sticker";
+                mediaType = "sticker";
+              }
+
+              // Save incoming message to history
+              const incomingMessage = {
+                id: msg.key.id,
+                sessionId,
+                from: sender,
+                message: content,
+                type: mediaType ? "media" : "text",
+                mediaType,
+                mediaUrl,
+                direction: "incoming",
+                status: "received",
+                timestamp: msg.messageTimestamp,
+                rawMessage: msg, // Store the raw message for reference
+              };
+
+              await saveMessageToHistory(sessionId, incomingMessage);
+
+              // Emit event for any listeners
+              io.emit(`${sessionId}.message.received`, incomingMessage);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing incoming message: ${error.message}`);
+      }
     });
 
     sessions.set(sessionId, { sock, active: true });
@@ -190,8 +253,35 @@ exports.createSessionManager = (io) => {
 
       const result = await sock.sendMessage(formattedNumber, { text: message });
 
+      // Save to message history
+      const messageData = {
+        id: result.key.id,
+        sessionId,
+        to: formattedNumber,
+        message,
+        type: "text",
+        status: "sent",
+        timestamp: result.messageTimestamp,
+        whatsappTimestamp: result.messageTimestamp,
+      };
+
+      await saveMessageToHistory(sessionId, messageData);
+
       return { id: result.key.id, timestamp: result.messageTimestamp };
     } catch (error) {
+      // Save failed message to history
+      const messageData = {
+        id: generateUniqueId(),
+        sessionId,
+        to,
+        message,
+        type: "text",
+        status: "failed",
+        error: error.message,
+      };
+
+      await saveMessageToHistory(sessionId, messageData);
+
       throw new Error(`Failed to send message: ${error.message}`);
     }
   };
@@ -227,8 +317,39 @@ exports.createSessionManager = (io) => {
 
       const result = await sock.sendMessage(formattedNumber, message);
 
+      // Save to message history
+      const messageData = {
+        id: result.key.id,
+        sessionId,
+        to: formattedNumber,
+        caption,
+        mediaUrl,
+        mediaType,
+        type: "media",
+        status: "sent",
+        timestamp: result.messageTimestamp,
+        whatsappTimestamp: result.messageTimestamp,
+      };
+
+      await saveMessageToHistory(sessionId, messageData);
+
       return { id: result.key.id, timestamp: result.messageTimestamp };
     } catch (error) {
+      // Save failed media message to history
+      const messageData = {
+        id: generateUniqueId(),
+        sessionId,
+        to,
+        caption,
+        mediaUrl,
+        mediaType,
+        type: "media",
+        status: "failed",
+        error: error.message,
+      };
+
+      await saveMessageToHistory(sessionId, messageData);
+
       throw new Error(`Failed to send media: ${error.message}`);
     }
   };
@@ -697,6 +818,343 @@ exports.createSessionManager = (io) => {
     return { valid: true };
   };
 
+  // Store message history in a JSON file for each session
+  const saveMessageToHistory = async (sessionId, messageData) => {
+    try {
+      const historyDir = path.join(SESSIONS_DIR, sessionId);
+      const historyFile = path.join(historyDir, "message-history.json");
+
+      // Create directory if it doesn't exist
+      await fs.ensureDir(historyDir);
+
+      // Read existing history or create new one
+      let history = { messages: [] };
+      if (await fs.pathExists(historyFile)) {
+        history = await fs.readJson(historyFile);
+      }
+
+      // Add message to history with timestamp
+      const timestamp = new Date().toISOString();
+      messageData.timestamp = timestamp;
+      messageData.createdAt = timestamp;
+
+      history.messages.push(messageData);
+
+      // Write updated history back to file
+      await fs.writeJson(historyFile, history, { spaces: 2 });
+
+      return messageData;
+    } catch (error) {
+      console.error(`Failed to save message history: ${error.message}`);
+      // Don't throw error here to prevent interrupting the main flow
+      return null;
+    }
+  };
+
+  // Update message status in history
+  const updateMessageStatus = async (sessionId, messageId, status, additionalData = {}) => {
+    try {
+      const historyFile = path.join(SESSIONS_DIR, sessionId, "message-history.json");
+
+      if (!(await fs.pathExists(historyFile))) {
+        throw new Error("Message history not found");
+      }
+
+      const history = await fs.readJson(historyFile);
+      const messageIndex = history.messages.findIndex((msg) => msg.id === messageId);
+
+      if (messageIndex === -1) {
+        throw new Error(`Message with ID ${messageId} not found`);
+      }
+
+      // Update the message status and add status update timestamp
+      history.messages[messageIndex] = {
+        ...history.messages[messageIndex],
+        status,
+        statusUpdatedAt: new Date().toISOString(),
+        ...additionalData,
+      };
+
+      await fs.writeJson(historyFile, history, { spaces: 2 });
+      return history.messages[messageIndex];
+    } catch (error) {
+      console.error(`Failed to update message status: ${error.message}`);
+      throw error;
+    }
+  };
+
+  const getMessageHistory = async (sessionId, options = {}) => {
+    try {
+      const historyFile = path.join(SESSIONS_DIR, sessionId, "message-history.json");
+
+      if (!(await fs.pathExists(historyFile))) {
+        return { messages: [] };
+      }
+
+      const history = await fs.readJson(historyFile);
+      let messages = [...history.messages];
+
+      // Apply filters if specified
+      if (options.status) {
+        messages = messages.filter((msg) => msg.status === options.status);
+      }
+
+      if (options.type) {
+        messages = messages.filter((msg) => msg.type === options.type);
+      }
+
+      if (options.recipient) {
+        messages = messages.filter((msg) => msg.to.includes(options.recipient));
+      }
+
+      // Apply date range filter if specified
+      if (options.startDate) {
+        const startDate = new Date(options.startDate);
+        messages = messages.filter((msg) => new Date(msg.timestamp) >= startDate);
+      }
+
+      if (options.endDate) {
+        const endDate = new Date(options.endDate);
+        messages = messages.filter((msg) => new Date(msg.timestamp) <= endDate);
+      }
+
+      // Apply pagination
+      const page = options.page || 1;
+      const limit = options.limit || 50;
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
+      // Sort messages by timestamp (newest first by default)
+      messages.sort((a, b) => {
+        const timeA = new Date(a.timestamp);
+        const timeB = new Date(b.timestamp);
+        return options.sortAsc ? timeA - timeB : timeB - timeA;
+      });
+
+      const paginatedMessages = messages.slice(startIndex, endIndex);
+
+      return {
+        messages: paginatedMessages,
+        pagination: {
+          total: messages.length,
+          page,
+          limit,
+          pages: Math.ceil(messages.length / limit),
+        },
+      };
+    } catch (error) {
+      throw new Error(`Failed to retrieve message history: ${error.message}`);
+    }
+  };
+
+  const getMessageById = async (sessionId, messageId) => {
+    try {
+      const historyFile = path.join(SESSIONS_DIR, sessionId, "message-history.json");
+
+      // Check if history file exists
+      if (!(await fs.pathExists(historyFile))) {
+        return null;
+      }
+
+      // Read the history file
+      const history = await fs.readJson(historyFile);
+
+      // Find the specific message by ID
+      const message = history.messages.find((msg) => msg.id === messageId);
+
+      // Return null if message not found
+      if (!message) {
+        return null;
+      }
+
+      // If message has media, prepare the media URL
+      if (message.type === "media" && message.mediaPath) {
+        // Construct the URL to access media files
+        // Adjust the path structure based on how your app serves media files
+        message.mediaUrl = `/api/${sessionId}/media/${message.mediaPath}`;
+      }
+
+      return message;
+    } catch (error) {
+      throw new Error(`Failed to retrieve message: ${error.message}`);
+    }
+  };
+
+  // Add a message receipt handler to update delivery status
+  const setupMessageStatusUpdates = (sessionId, sock) => {
+    // Listen for message status updates
+    sock.ev.on("messages.update", async (updates) => {
+      console.log(`[${sessionId}] Message status updates:`, updates);
+
+      for (const update of updates) {
+        if (update.key && update.key.id && update.update) {
+          const messageId = update.key.id;
+
+          try {
+            // Extract relevant status information
+            const statusData = {
+              ...update.update,
+            };
+
+            let status = "unknown";
+
+            // Determine message status based on available flags
+            if (statusData.status) {
+              status = statusData.status; // 'sent', 'delivered', 'read'
+            } else if (statusData.deliveredAt) {
+              status = "delivered";
+            } else if (statusData.readAt) {
+              status = "read";
+            }
+
+            // Update message status in our records
+            await updateMessageStatus(sessionId, messageId, status, statusData);
+
+            // Emit event for frontend
+            io.emit(`${sessionId}.message.status`, {
+              messageId,
+              status,
+              ...statusData,
+            });
+          } catch (error) {
+            console.error(`Error updating message status for ${messageId}:`, error);
+          }
+        }
+      }
+    });
+  };
+
+  // Add message receipt acknowledgment
+  const requestMessageStatus = async (sessionId, messageId) => {
+    try {
+      const sock = getSession(sessionId);
+      await sock.readMessages([{ id: messageId, remoteJid: null }]);
+      return { success: true, message: "Status request sent" };
+    } catch (error) {
+      throw new Error(`Failed to request message status: ${error.message}`);
+    }
+  };
+
+  // Add bulk delete for message history
+  const deleteMessageHistory = async (sessionId, options = {}) => {
+    try {
+      const historyFile = path.join(SESSIONS_DIR, sessionId, "message-history.json");
+
+      if (!(await fs.pathExists(historyFile))) {
+        return { deleted: 0 };
+      }
+
+      const history = await fs.readJson(historyFile);
+      const originalCount = history.messages.length;
+
+      if (options.all === true) {
+        // Delete all message history
+        history.messages = [];
+      } else if (options.ids && Array.isArray(options.ids)) {
+        // Delete specific messages by ID
+        history.messages = history.messages.filter((msg) => !options.ids.includes(msg.id));
+      } else if (options.before) {
+        // Delete messages before a certain date
+        const beforeDate = new Date(options.before);
+        history.messages = history.messages.filter((msg) => new Date(msg.timestamp) >= beforeDate);
+      } else if (options.status) {
+        // Delete messages with specific status
+        history.messages = history.messages.filter((msg) => msg.status !== options.status);
+      }
+
+      // Write updated history back to file
+      await fs.writeJson(historyFile, history, { spaces: 2 });
+
+      return {
+        deleted: originalCount - history.messages.length,
+        remaining: history.messages.length,
+      };
+    } catch (error) {
+      throw new Error(`Failed to delete message history: ${error.message}`);
+    }
+  };
+
+  // Generate message statistics
+  const getMessageStats = async (sessionId, timeRange = "all") => {
+    try {
+      const historyFile = path.join(SESSIONS_DIR, sessionId, "message-history.json");
+
+      if (!(await fs.pathExists(historyFile))) {
+        return {
+          total: 0,
+          statuses: {},
+          types: {},
+          timeline: [],
+        };
+      }
+
+      const history = await fs.readJson(historyFile);
+      let messages = [...history.messages];
+
+      // Apply time range filter
+      const now = new Date();
+      if (timeRange === "today") {
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        messages = messages.filter((msg) => new Date(msg.timestamp) >= today);
+      } else if (timeRange === "week") {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        messages = messages.filter((msg) => new Date(msg.timestamp) >= weekAgo);
+      } else if (timeRange === "month") {
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        messages = messages.filter((msg) => new Date(msg.timestamp) >= monthAgo);
+      }
+
+      // Calculate statistics
+      const stats = {
+        total: messages.length,
+        statuses: {},
+        types: {},
+        recipients: {},
+        timeline: [],
+      };
+
+      // Count by status and type
+      messages.forEach((msg) => {
+        // Count by status
+        stats.statuses[msg.status] = (stats.statuses[msg.status] || 0) + 1;
+
+        // Count by type
+        stats.types[msg.type] = (stats.types[msg.type] || 0) + 1;
+
+        // Count by recipient (only store first 20 for privacy)
+        if (Object.keys(stats.recipients).length < 20) {
+          stats.recipients[msg.to] = (stats.recipients[msg.to] || 0) + 1;
+        }
+      });
+
+      // Generate timeline data (messages per day)
+      const timelineMap = {};
+
+      messages.forEach((msg) => {
+        const date = new Date(msg.timestamp);
+        const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+
+        timelineMap[dateStr] = (timelineMap[dateStr] || 0) + 1;
+      });
+
+      // Convert timeline to array and sort by date
+      stats.timeline = Object.entries(timelineMap)
+        .map(([date, count]) => ({
+          date,
+          count,
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      return stats;
+    } catch (error) {
+      throw new Error(`Failed to generate message statistics: ${error.message}`);
+    }
+  };
+
   return {
     createSession,
     getSession,
@@ -716,5 +1174,13 @@ exports.createSessionManager = (io) => {
     bulkEditScheduledMessages,
     bulkDeleteScheduledMessages,
     refreshAllSessions,
+    // message history
+    getMessageHistory,
+    updateMessageStatus,
+    setupMessageStatusUpdates,
+    requestMessageStatus,
+    deleteMessageHistory,
+    getMessageStats,
+    getMessageById,
   };
 };

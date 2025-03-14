@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp Message History</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      /* Chart container heights */
+      #messageTypesChart,
+      #messageStatusChart {
+        height: 300px !important;
+      }
+
+      /* Make chart containers fixed height */
+      .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-4">
+      <h1>WhatsApp Message History</h1>
+
+      <div class="row mb-4">
+        <div class="col">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Message Statistics</h5>
+              <div>
+                <select id="timeRangeSelector" class="form-select form-select-sm">
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="week">Last 7 Days</option>
+                  <option value="month">Last 30 Days</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="card bg-primary text-white">
+                    <div class="card-body">
+                      <h5 class="card-title">Total Messages</h5>
+                      <h2 id="totalMessages">-</h2>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-success text-white">
+                    <div class="card-body">
+                      <h5 class="card-title">Delivered</h5>
+                      <h2 id="deliveredMessages">-</h2>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-info text-white">
+                    <div class="card-body">
+                      <h5 class="card-title">Read</h5>
+                      <h2 id="readMessages">-</h2>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-danger text-white">
+                    <div class="card-body">
+                      <h5 class="card-title">Failed</h5>
+                      <h2 id="failedMessages">-</h2>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mt-4">
+                <div class="col-md-6">
+                  <h5>Message Types</h5>
+                  <div class="chart-container">
+                    <canvas id="messageTypesChart"></canvas>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <h5>Message Status</h5>
+                  <div class="chart-container">
+                    <canvas id="messageStatusChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Message History</h5>
+          <div class="d-flex">
+            <select id="statusFilter" class="form-select form-select-sm me-2">
+              <option value="">All Statuses</option>
+              <option value="sent">Sent</option>
+              <option value="delivered">Delivered</option>
+              <option value="read">Read</option>
+              <option value="failed">Failed</option>
+            </select>
+            <select id="typeFilter" class="form-select form-select-sm me-2">
+              <option value="">All Types</option>
+              <option value="text">Text</option>
+              <option value="media">Media</option>
+            </select>
+            <button id="refreshButton" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>To</th>
+                  <th>Type</th>
+                  <th>Content</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="messageHistoryTable">
+                <tr>
+                  <td colspan="6" class="text-center">Loading messages...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <nav>
+            <ul id="pagination" class="pagination justify-content-center">
+              <!-- Pagination will be inserted here by JS -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Constants
+      const API_BASE_URL = "/api"; // Adjust based on your API setup
+      const CURRENT_SESSION = "<%= sessionId  %>";
+
+      // Elements
+      const statusFilter = document.getElementById("statusFilter");
+      const typeFilter = document.getElementById("typeFilter");
+      const refreshButton = document.getElementById("refreshButton");
+      const messageHistoryTable = document.getElementById("messageHistoryTable");
+      const pagination = document.getElementById("pagination");
+      const timeRangeSelector = document.getElementById("timeRangeSelector");
+
+      // Stats elements
+      const totalMessages = document.getElementById("totalMessages");
+      const deliveredMessages = document.getElementById("deliveredMessages");
+      const readMessages = document.getElementById("readMessages");
+      const failedMessages = document.getElementById("failedMessages");
+
+      // Charts
+      let messageTypesChart;
+      let messageStatusChart;
+
+      // State
+      let currentPage = 1;
+      let totalPages = 1;
+      const limit = 25;
+
+      // Initialize
+      document.addEventListener("DOMContentLoaded", () => {
+        if (!CURRENT_SESSION) {
+          alert("No session selected. Please select a session first.");
+          return;
+        }
+
+        loadMessageStats();
+        loadMessageHistory();
+
+        // Event listeners
+        refreshButton.addEventListener("click", () => {
+          loadMessageHistory();
+          loadMessageStats();
+        });
+
+        statusFilter.addEventListener("change", () => {
+          currentPage = 1;
+          loadMessageHistory();
+        });
+
+        typeFilter.addEventListener("change", () => {
+          currentPage = 1;
+          loadMessageHistory();
+        });
+
+        timeRangeSelector.addEventListener("change", () => {
+          loadMessageStats();
+        });
+
+        // Socket.io for realtime updates (if available)
+        if (window.io) {
+          const socket = io();
+          socket.on(`${CURRENT_SESSION}.message.status`, (update) => {
+            // Refresh data when a message status is updated
+            loadMessageHistory();
+            loadMessageStats();
+          });
+
+          socket.on(`${CURRENT_SESSION}.message.received`, (message) => {
+            // Refresh data when a new message is received
+            loadMessageHistory();
+            loadMessageStats();
+          });
+        }
+      });
+
+      // Load message statistics
+      async function loadMessageStats() {
+        try {
+          const timeRange = timeRangeSelector.value;
+
+          // Make sure API_BASE_URL is formatted properly
+          let baseUrl = API_BASE_URL;
+          if (
+            !baseUrl.startsWith("http://") &&
+            !baseUrl.startsWith("https://") &&
+            !baseUrl.startsWith("/")
+          ) {
+            baseUrl = "/" + baseUrl;
+          }
+
+          // Use string concatenation instead of URL constructor
+          let url = `${baseUrl}/${CURRENT_SESSION}/messages/stats`;
+          if (timeRange !== "all") {
+            url += `?timeRange=${timeRange}`;
+          }
+
+          const response = await fetch(url);
+          const data = await response.json();
+
+          // Update stats cards
+          totalMessages.textContent = data.total || 0;
+          deliveredMessages.textContent = data.statuses?.delivered || 0;
+          readMessages.textContent = data.statuses?.read || 0;
+          failedMessages.textContent = data.statuses?.failed || 0;
+
+          // Update charts
+          updateMessageTypeChart(data.types);
+          updateMessageStatusChart(data.statuses);
+        } catch (error) {
+          console.error("Error loading message stats:", error);
+        }
+      }
+
+      // Apply the same fix to loadMessageHistory function
+      async function loadMessageHistory() {
+        try {
+          const status = statusFilter.value;
+          const type = typeFilter.value;
+
+          // Make sure API_BASE_URL is formatted properly
+          let baseUrl = API_BASE_URL;
+          if (
+            !baseUrl.startsWith("http://") &&
+            !baseUrl.startsWith("https://") &&
+            !baseUrl.startsWith("/")
+          ) {
+            baseUrl = "/" + baseUrl;
+          }
+
+          // Use string concatenation to build URL with query parameters
+          let url = `${baseUrl}/${CURRENT_SESSION}/messages?page=${currentPage}&limit=${limit}`;
+
+          if (status) url += `&status=${status}`;
+          if (type) url += `&type=${type}`;
+
+          const response = await fetch(url);
+          const data = await response.json();
+
+          if (data.messages && Array.isArray(data.messages)) {
+            renderMessageTable(data.messages);
+            renderPagination(data.pagination);
+          } else {
+            messageHistoryTable.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center">No messages found</td>
+        </tr>
+      `;
+            pagination.innerHTML = "";
+          }
+        } catch (error) {
+          console.error("Error loading message history:", error);
+          messageHistoryTable.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center text-danger">Error loading messages: ${error.message}</td>
+      </tr>
+    `;
+        }
+      }
+      // Render message table
+      function renderMessageTable(messages) {
+        if (!messages.length) {
+          messageHistoryTable.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center">No messages found</td>
+      </tr>
+    `;
+          return;
+        }
+
+        const rows = messages
+          .map((message) => {
+            const time = new Date(message.timestamp).toLocaleString();
+
+            // Safely handle recipient/to field
+            let recipient = "";
+            if (message.to) {
+              // Handle outgoing messages with 'to' field
+              recipient = message.to.includes("@") ? message.to.split("@")[0] : message.to;
+            } else if (message.from) {
+              // Handle incoming messages with 'from' field
+              recipient = message.from.includes("@") ? message.from.split("@")[0] : message.from;
+            } else {
+              recipient = "Unknown";
+            }
+
+            // Safely handle message content with null checks
+            const content =
+              message.type === "text"
+                ? truncateText(message.message || "", 50)
+                : message.caption
+                ? truncateText(message.caption, 30)
+                : `[${message.mediaType || "Media"}]`;
+
+            // Convert status (could be number or string) to a readable format
+            let statusText = "";
+            let statusClass = "";
+
+            // Handle numeric status codes (WhatsApp uses these)
+            if (typeof message.status === "number") {
+              switch (message.status) {
+                case 0:
+                  statusText = "Pending";
+                  statusClass = "bg-secondary";
+                  break;
+                case 1:
+                  statusText = "Sent";
+                  statusClass = "bg-primary";
+                  break;
+                case 2:
+                  statusText = "Delivered";
+                  statusClass = "bg-success";
+                  break;
+                case 3:
+                  statusText = "Read";
+                  statusClass = "bg-info";
+                  break;
+                case 4:
+                  statusText = "Failed";
+                  statusClass = "bg-danger";
+                  break;
+                default:
+                  statusText = `Status: ${message.status}`;
+                  statusClass = "bg-secondary";
+              }
+            } else {
+              // Handle string status
+              statusText = message.status
+                ? message.status.charAt(0).toUpperCase() + message.status.slice(1)
+                : "Unknown";
+
+              switch (message.status) {
+                case "sent":
+                  statusClass = "bg-primary";
+                  break;
+                case "delivered":
+                  statusClass = "bg-success";
+                  break;
+                case "read":
+                  statusClass = "bg-info";
+                  break;
+                case "failed":
+                  statusClass = "bg-danger";
+                  break;
+                case "received":
+                  statusText = "Received";
+                  statusClass = "bg-success";
+                  break;
+                default:
+                  statusClass = "bg-secondary";
+              }
+            }
+
+            const statusBadge = `<span class="badge ${statusClass}">${statusText}</span>`;
+
+            // Add a direction indicator for incoming vs outgoing
+            const directionIndicator =
+              message.direction === "incoming" || message.from
+                ? '<span class="badge bg-warning text-dark me-2">Incoming</span>'
+                : '<span class="badge bg-secondary me-2">Outgoing</span>';
+
+            return `
+      <tr>
+        <td>${time}</td>
+        <td>${recipient}</td>
+        <td>${
+          message.type === "text"
+            ? "Text"
+            : message.mediaType
+            ? message.mediaType.charAt(0).toUpperCase() + message.mediaType.slice(1)
+            : "Media"
+        }</td>
+        <td>${content}</td>
+        <td>${directionIndicator}${statusBadge}</td>
+        <td>
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary btn-sm" onclick="viewMessageDetails('${
+              message.id
+            }')">
+              View
+            </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteMessage('${message.id}')">
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+          })
+          .join("");
+
+        messageHistoryTable.innerHTML = rows;
+      }
+      // Render pagination
+      function renderPagination(paginationData) {
+        if (!paginationData) return;
+
+        const { total, page, limit, pages } = paginationData;
+        currentPage = page;
+        totalPages = pages;
+
+        if (totalPages <= 1) {
+          pagination.innerHTML = "";
+          return;
+        }
+
+        let paginationHTML = "";
+
+        // Previous button
+        paginationHTML += `
+          <li class="page-item ${page === 1 ? "disabled" : ""}">
+            <a class="page-link" href="#" onclick="changePage(${
+              page - 1
+            }); return false;">Previous</a>
+          </li>
+        `;
+
+        // Page numbers
+        const startPage = Math.max(1, page - 2);
+        const endPage = Math.min(pages, page + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
+          paginationHTML += `
+            <li class="page-item ${i === page ? "active" : ""}">
+              <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+            </li>
+          `;
+        }
+
+        // Next button
+        paginationHTML += `
+          <li class="page-item ${page === pages ? "disabled" : ""}">
+            <a class="page-link" href="#" onclick="changePage(${page + 1}); return false;">Next</a>
+          </li>
+        `;
+
+        pagination.innerHTML = paginationHTML;
+      }
+
+      // Update message type chart
+      function updateMessageTypeChart(typesData) {
+        const ctx = document.getElementById("messageTypesChart").getContext("2d");
+
+        // Destroy existing chart if it exists
+        if (messageTypesChart) {
+          messageTypesChart.destroy();
+        }
+
+        const labels = Object.keys(typesData || {}).map(
+          (type) => type.charAt(0).toUpperCase() + type.slice(1)
+        );
+
+        const data = Object.values(typesData || {});
+
+        messageTypesChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                data: data,
+                backgroundColor: [
+                  "rgba(54, 162, 235, 0.7)",
+                  "rgba(255, 99, 132, 0.7)",
+                  "rgba(255, 206, 86, 0.7)",
+                  "rgba(75, 192, 192, 0.7)",
+                  "rgba(153, 102, 255, 0.7)",
+                ],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
+            },
+          },
+        });
+      }
+
+      // Update message status chart
+      function updateMessageStatusChart(statusData) {
+        const ctx = document.getElementById("messageStatusChart").getContext("2d");
+
+        // Destroy existing chart if it exists
+        if (messageStatusChart) {
+          messageStatusChart.destroy();
+        }
+
+        const labels = Object.keys(statusData || {}).map(
+          (status) => status.charAt(0).toUpperCase() + status.slice(1)
+        );
+
+        const data = Object.values(statusData || {});
+
+        const backgroundColors = {
+          Sent: "rgba(54, 162, 235, 0.7)",
+          Delivered: "rgba(75, 192, 192, 0.7)",
+          Read: "rgba(153, 102, 255, 0.7)",
+          Failed: "rgba(255, 99, 132, 0.7)",
+          Pending: "rgba(255, 206, 86, 0.7)",
+        };
+
+        messageStatusChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                data: data,
+                backgroundColor: labels.map(
+                  (label) => backgroundColors[label] || "rgba(201, 203, 207, 0.7)"
+                ),
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
+            },
+          },
+        });
+      }
+      // Helper: Truncate text
+      function truncateText(text, maxLength) {
+        if (!text) return "";
+        return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+      }
+
+      // Change page handler
+      function changePage(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        loadMessageHistory();
+      }
+
+      // View message details
+      async function viewMessageDetails(messageId) {
+        // Open modal or navigate to message details page
+        const url = `${API_BASE_URL}/${CURRENT_SESSION}/messages/${messageId}`;
+
+        // Modal approach
+        const modalId = "messageDetailModal";
+        let modal = document.getElementById(modalId);
+
+        if (!modal) {
+          // Create modal if it doesn't exist
+          modal = document.createElement("div");
+          modal.id = modalId;
+          modal.className = "modal fade";
+          modal.setAttribute("tabindex", "-1");
+          modal.setAttribute("aria-hidden", "true");
+
+          modal.innerHTML = `
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Message Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body" id="${modalId}-body">
+                    <div class="text-center">
+                      <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="${modalId}-resend">Resend</button>
+                  </div>
+                </div>
+              </div>
+            `;
+
+          document.body.appendChild(modal);
+        }
+
+        // Get modal elements
+        const modalElement = bootstrap.Modal.getOrCreateInstance(modal);
+        const modalBody = document.getElementById(`${modalId}-body`);
+        const resendButton = document.getElementById(`${modalId}-resend`);
+
+        // Show modal and load data
+        modalElement.show();
+
+        console.log("url", url);
+
+        await fetch(url)
+          .then((response) => response.json())
+          .then((message) => {
+            let content = "";
+
+            if (message.type === "media") {
+              // Display media preview if available
+              if (message.mediaUrl) {
+                if (["image/jpeg", "image/png", "image/gif"].includes(message.mediaType)) {
+                  content = `<img src="${message.mediaUrl}" class="img-fluid mb-3" alt="Media preview">`;
+                } else if (message.mediaType.startsWith("video/")) {
+                  content = `<video controls class="img-fluid mb-3"><source src="${message.mediaUrl}" type="${message.mediaType}">Your browser does not support the video tag.</video>`;
+                } else if (message.mediaType.startsWith("audio/")) {
+                  content = `<audio controls class="mb-3"><source src="${message.mediaUrl}" type="${message.mediaType}">Your browser does not support the audio tag.</audio>`;
+                } else {
+                  content = `<div class="alert alert-info mb-3">Media file: ${
+                    message.fileName || "Unnamed file"
+                  }</div>`;
+                }
+              }
+            }
+
+            // Message content
+            content += `
+                <div class="card mb-3">
+                  <div class="card-header">
+                    <strong>Content</strong>
+                  </div>
+                  <div class="card-body">
+                    <p>${
+                      message.type === "text" ? message.message : message.caption || "No caption"
+                    }</p>
+                  </div>
+                </div>
+              `;
+
+            // Message details
+            content += `
+                <div class="card">
+                  <div class="card-header">
+                    <strong>Details</strong>
+                  </div>
+                  <div class="card-body">
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <th scope="row">To</th>
+                          <td>${message.to}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Time</th>
+                          <td>${new Date(message.timestamp).toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Status</th>
+                          <td>${message.status}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Type</th>
+                          <td>${message.type}${
+              message.mediaType ? ` (${message.mediaType})` : ""
+            }</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Message ID</th>
+                          <td>${message.id}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              `;
+
+            modalBody.innerHTML = content;
+
+            // Enable/disable resend button based on status
+            resendButton.disabled = message.status === "delivered" || message.status === "read";
+            resendButton.onclick = () => resendMessage(message.id);
+          })
+          .catch((error) => {
+            modalBody.innerHTML = `<div class="alert alert-danger">Error loading message details: ${error.message}</div>`;
+          });
+      }
+
+      // Delete message
+      async function deleteMessage(messageId) {
+        if (!confirm("Are you sure you want to delete this message?")) {
+          return;
+        }
+
+        try {
+          const url = `${API_BASE_URL}/${CURRENT_SESSION}/messages/${messageId}`;
+          const response = await fetch(url, {
+            method: "DELETE",
+          });
+
+          if (response.ok) {
+            loadMessageHistory();
+            loadMessageStats();
+          } else {
+            const errorData = await response.json();
+            alert(`Failed to delete message: ${errorData.message || response.statusText}`);
+          }
+        } catch (error) {
+          console.error("Error deleting message:", error);
+          alert(`Error deleting message: ${error.message}`);
+        }
+      }
+
+      // Resend message
+      async function resendMessage(messageId) {
+        try {
+          const url = `${API_BASE_URL}/${CURRENT_SESSION}/messages/${messageId}/resend`;
+          const response = await fetch(url, {
+            method: "POST",
+          });
+
+          if (response.ok) {
+            // Close modal if open
+            const modalElement = bootstrap.Modal.getInstance(
+              document.getElementById("messageDetailModal")
+            );
+            if (modalElement) {
+              modalElement.hide();
+            }
+
+            loadMessageHistory();
+            loadMessageStats();
+
+            alert("Message resent successfully");
+          } else {
+            const errorData = await response.json();
+            alert(`Failed to resend message: ${errorData.message || response.statusText}`);
+          }
+        } catch (error) {
+          console.error("Error resending message:", error);
+          alert(`Error resending message: ${error.message}`);
+        }
+      }
+    </script>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Optional: Socket.io for realtime updates -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  </body>
+</html>

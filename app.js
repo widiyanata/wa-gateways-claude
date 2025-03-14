@@ -112,6 +112,14 @@ app.get("/settings", (req, res) => {
   });
 });
 
+app.get("/messages/:sessionId", (req, res) => {
+  const { sessionId } = req.params;
+  res.render("message-history", {
+    title: "message history",
+    sessionId,
+  });
+});
+
 // API routes
 app.use("/api", apiRoutes);
 

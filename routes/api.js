@@ -200,4 +200,109 @@ router.delete("/schedule-message/:sessionId/:messageId", async (req, res) => {
   }
 });
 
+// Get message history for a session
+router.get("/:sessionId/messages", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { status, type, recipient, startDate, endDate, page, limit, sortAsc } = req.query;
+
+    const options = {
+      status,
+      type,
+      recipient,
+      startDate,
+      endDate,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 50,
+      sortAsc: sortAsc === "true",
+    };
+
+    const messages = await req.sessionManager.getMessageHistory(sessionId, options);
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get message detail by ID
+router.get("/:sessionId/messages/:messageId", async (req, res) => {
+  try {
+    const { sessionId, messageId } = req.params;
+
+    // Use the new function to get the message
+    const message = await req.sessionManager.getMessageById(sessionId, messageId);
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    res.json(message);
+  } catch (error) {
+    console.error(`Error fetching message detail: ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get message statistics
+router.get("/:sessionId/messages/stats", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { timeRange } = req.query;
+
+    const stats = await req.sessionManager.getMessageStats(sessionId, timeRange);
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update message status manually
+router.put("/:sessionId/messages/:messageId/status", async (req, res) => {
+  try {
+    const { sessionId, messageId } = req.params;
+    const { status, additionalData } = req.body;
+
+    const updatedMessage = await req.sessionManager.updateMessageStatus(
+      sessionId,
+      messageId,
+      status,
+      additionalData
+    );
+
+    res.json(updatedMessage);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Request message status from WhatsApp
+router.post("/:sessionId/messages/:messageId/request-status", async (req, res) => {
+  try {
+    const { sessionId, messageId } = req.params;
+    const result = await req.sessionManager.requestMessageStatus(sessionId, messageId);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete message history
+router.delete("/:sessionId/messages", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { all, ids, before, status } = req.body;
+
+    const result = await req.sessionManager.deleteMessageHistory(sessionId, {
+      all,
+      ids,
+      before,
+      status,
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -140,7 +140,7 @@ router.get("/contacts/:sessionId", async (req, res) => {
 router.post("/schedule-message/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { to, message, scheduledTime } = req.body;
+    const { to, message, scheduledTime, recurringOptions } = req.body;
 
     if (!to || !message || !scheduledTime) {
       return res
@@ -152,7 +152,8 @@ router.post("/schedule-message/:sessionId", async (req, res) => {
       sessionId,
       to,
       message,
-      scheduledTime
+      scheduledTime,
+      recurringOptions
     );
     res.json({ success: true, data: { messageId } });
   } catch (error) {

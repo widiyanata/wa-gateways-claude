@@ -441,6 +441,7 @@
                                         required
                                       />
                                     </div>
+
                                     <div class="d-grid">
                                       <button type="submit" class="btn btn-primary">
                                         <i class="bi bi-calendar-plus"></i> Schedule Message
@@ -448,6 +449,122 @@
                                     </div>
                                   </form>
                                 </div>
+                                <!-- Recurring -->
+                                <div id="recurringSchedule" class="card-body">
+                                  <div class="form-check form-switch mb-3">
+                                    <input
+                                      class="form-check-input"
+                                      type="checkbox"
+                                      id="isRecurring"
+                                      name="isRecurring"
+                                    />
+                                    <label class="form-check-label" for="isRecurring"
+                                      >Set as recurring message</label
+                                    >
+                                  </div>
+
+                                  <div
+                                    id="recurringOptions"
+                                    class="p-3 bg-light rounded mb-4 d-none"
+                                  >
+                                    <div class="mb-1">
+                                      <label class="block text-gray-700 mb-2">Recurring Type</label>
+                                      <div class="flex flex-col space-y-2">
+                                        <label class="inline-flex items-center">
+                                          <input
+                                            type="radio"
+                                            name="recurringType"
+                                            value="daily"
+                                            checked
+                                            class="mr-2"
+                                          />
+                                          <span>Daily (send every day at the scheduled time)</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input
+                                            type="radio"
+                                            name="recurringType"
+                                            value="weekly"
+                                            class="mr-2"
+                                          />
+                                          <span>Weekly (send every week on the same day)</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input
+                                            type="radio"
+                                            name="recurringType"
+                                            value="monthly"
+                                            class="mr-2"
+                                          />
+                                          <span>Monthly (send every month on the same day)</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input
+                                            type="radio"
+                                            name="recurringType"
+                                            value="custom"
+                                            class="mr-2"
+                                          />
+                                          <span>Custom (select specific days)</span>
+                                        </label>
+                                      </div>
+                                    </div>
+
+                                    <div id="customDaysSelection" class="ps-3 mb-3 d-none">
+                                      <label class="block text-gray-700 mb-2">Select Days</label>
+                                      <div class="grid grid-cols-2 gap-2">
+                                        <label class="inline-flex items-center">
+                                          <input type="checkbox" name="day-monday" class="mr-2" />
+                                          <span>Monday</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input type="checkbox" name="day-tuesday" class="mr-2" />
+                                          <span>Tuesday</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input
+                                            type="checkbox"
+                                            name="day-wednesday"
+                                            class="mr-2"
+                                          />
+                                          <span>Wednesday</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input type="checkbox" name="day-thursday" class="mr-2" />
+                                          <span>Thursday</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input type="checkbox" name="day-friday" class="mr-2" />
+                                          <span>Friday</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input type="checkbox" name="day-saturday" class="mr-2" />
+                                          <span>Saturday</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                          <input type="checkbox" name="day-sunday" class="mr-2" />
+                                          <span>Sunday</span>
+                                        </label>
+                                      </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                      <label class="block text-gray-700 mb-2" for="endDate"
+                                        >End Date (Optional)</label
+                                      >
+                                      <input
+                                        type="date"
+                                        id="endDate"
+                                        name="endDate"
+                                        class="w-full px-3 py-1 border rounded"
+                                      />
+                                      <p class="text-sm text-gray-500 mt-1">
+                                        Leave empty for indefinite recurring
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                                <!-- / -->
                               </div>
                               <div
                                 class="tab-pane"
@@ -1159,18 +1276,18 @@
             messages.forEach((msg) => {
               const tr = document.createElement("tr");
               tr.innerHTML = `
-                <td>${msg.to.replace("@s.whatsapp.net", "")}</td>
-                <td>${msg.message}</td>
-                <td>${new Date(msg.scheduledTime).toLocaleString()}</td>
-                <td>
-                  <button class="btn btn-sm btn-warning me-2 edit-schedule" data-id="${
-                    msg.id
-                  }"><i class="bi bi-pencil"></i> </button>
-                  <button class="btn btn-sm btn-danger delete-schedule" data-id="${
-                    msg.id
-                  }"><i class="bi bi-trash"></i> </button>
-                </td>
-              `;
+                  <td>${msg.to.replace("@s.whatsapp.net", "")}</td>
+                  <td>${msg.message}</td>
+                  <td>${new Date(msg.scheduledTime).toLocaleString()}</td>
+                  <td>
+                    <button class="btn btn-sm btn-warning me-2 edit-schedule" data-id="${
+                      msg.id
+                    }"><i class="bi bi-pencil"></i> </button>
+                    <button class="btn btn-sm btn-danger delete-schedule" data-id="${
+                      msg.id
+                    }"><i class="bi bi-trash"></i> </button>
+                  </td>
+                `;
               tbody.appendChild(tr);
             });
 
@@ -1376,11 +1493,11 @@
 
         document.getElementById("clear-logs").addEventListener("click", () => {
           document.getElementById("message-log").innerHTML = `
-        <div class="text-center py-4 text-muted">
-            <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
-            <p class="mt-2">No activity yet. Send a message to see logs.</p>
-        </div>
-    `;
+          <div class="text-center py-4 text-muted">
+              <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+              <p class="mt-2">No activity yet. Send a message to see logs.</p>
+          </div>
+      `;
         });
         document.getElementById("logout-btn").addEventListener("click", async () => {
           try {
@@ -1435,11 +1552,63 @@
           const message = document.getElementById("schedule-message").value;
           const scheduledTime = document.getElementById("scheduled-time").value;
 
+          let payload = {
+            to,
+            message,
+            scheduledTime,
+          };
+
+          console.log(document.querySelector("#isRecurring").checked);
+          // Add recurring options if selected
+          if (document.querySelector("#isRecurring").checked) {
+            const recurringType = document.querySelector(
+              'input[name="recurringType"]:checked'
+            ).value;
+            let recurringOptions = {
+              type: recurringType,
+            };
+
+            // If custom days are selected, add them to the options
+            if (recurringType === "custom") {
+              const days = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+              ];
+              const selectedDays = days.filter(
+                (day) => document.getElementById(`day-${day}`).value === "on"
+              );
+
+              if (selectedDays.length === 0) {
+                alert("Please select at least one day for custom recurring schedule");
+                return;
+              }
+
+              recurringOptions.days = selectedDays;
+            }
+
+            // Add end date if specified
+            if (document.getElementById("endDate")) {
+              recurringOptions.endDate =
+                document.getElementById("endDate").value == ""
+                  ? null
+                  : new Date(document.getElementById("endDate").value).toISOString();
+            }
+
+            payload.recurringOptions = recurringOptions;
+          }
+
+          console.log(payload);
+
           try {
             const response = await fetch(`/api/schedule-message/${sessionId}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ to, message, scheduledTime }),
+              body: JSON.stringify(payload),
             });
             const result = await response.json();
             if (result.success) {
@@ -1452,6 +1621,20 @@
           } catch (error) {
             showStatusModal("Error", error.message);
           }
+        });
+
+        // Show/hide recurring options based on checkbox
+        document.getElementById("isRecurring").addEventListener("change", function () {
+          const recurringOptions = document.getElementById("recurringOptions");
+          recurringOptions.classList.toggle("d-none", !this.checked);
+        });
+
+        // Show/hide custom days selection based on recurring type
+        document.querySelectorAll('input[name="recurringType"]').forEach((radio) => {
+          radio.addEventListener("change", function () {
+            const customDaysSelection = document.getElementById("customDaysSelection");
+            customDaysSelection.classList.toggle("d-none", this.value !== "custom");
+          });
         });
 
         // Refresh Scheduled Messages

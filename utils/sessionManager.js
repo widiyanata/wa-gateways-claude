@@ -273,51 +273,184 @@ exports.createSessionManager = (io) => {
 
   const scheduledTasks = new Map();
 
-  const scheduleMessage = async (sessionId, to, message, scheduledTime) => {
+  // Enhance scheduleMessage to support recurring schedules
+  const scheduleMessage = async (
+    sessionId,
+    to,
+    message,
+    scheduledTime,
+    recurringOptions = null
+  ) => {
     const messageId = generateUniqueId();
     console.log("messageId", messageId);
-    const scheduledDate = new Date(scheduledTime);
-    if (isNaN(scheduledDate)) {
-      throw new Error("Invalid scheduled time");
+
+    let task;
+
+    // If there are recurring options, set up a recurring schedule
+    if (recurringOptions && recurringOptions.type) {
+      // Validate recurring options
+      if (!["daily", "weekly", "monthly", "custom"].includes(recurringOptions.type)) {
+        throw new Error("Invalid recurring type. Must be 'daily', 'weekly', or 'custom'");
+      }
+
+      let cronExpression;
+      const scheduledDate = new Date(scheduledTime);
+
+      if (isNaN(scheduledDate)) {
+        throw new Error("Invalid scheduled time");
+      }
+
+      // Generate cron expression based on recurring type
+      switch (recurringOptions.type) {
+        case "daily":
+          // Run every day at the specified time
+          cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} * * *`;
+          break;
+
+        case "weekly":
+          // Run every week on the same day at the specified time
+          cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} * * ${scheduledDate.getDay()}`;
+          break;
+
+        case "monthly":
+          // Run every month on the same day at the specified time
+          cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} ${scheduledDate.getDate()} * *`;
+          break;
+
+        case "custom":
+          // Custom days of the week (e.g., ['monday', 'wednesday', 'friday'])
+          if (
+            !recurringOptions.days ||
+            !Array.isArray(recurringOptions.days) ||
+            recurringOptions.days.length === 0
+          ) {
+            throw new Error("Custom recurring type requires 'days' array");
+          }
+
+          const dayMap = {
+            sunday: 0,
+            monday: 1,
+            tuesday: 2,
+            wednesday: 3,
+            thursday: 4,
+            friday: 5,
+            saturday: 6,
+          };
+
+          const dayNumbers = recurringOptions.days.map((day) => {
+            const dayNumber = dayMap[day.toLowerCase()];
+            if (dayNumber === undefined) {
+              throw new Error(`Invalid day: ${day}`);
+            }
+            return dayNumber;
+          });
+
+          cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} * * ${dayNumbers.join(
+            ","
+          )}`;
+          break;
+      }
+
+      console.log("Recurring cron expression:", cronExpression);
+
+      task = cron.schedule(cronExpression, async () => {
+        try {
+          console.log(`Sending scheduled recurring message: ${messageId}`);
+          await sendMessage(sessionId, to, message);
+
+          // Update last sent time
+          await updateScheduledMessage(sessionId, messageId, {
+            lastSent: new Date().toISOString(),
+            status: "active",
+          });
+
+          // If there's an end date and we've passed it, stop the task
+          if (recurringOptions.endDate) {
+            const endDate = new Date(recurringOptions.endDate);
+            if (!isNaN(endDate) && new Date() > endDate) {
+              task.stop();
+              scheduledTasks.delete(messageId);
+              await updateScheduledMessage(sessionId, messageId, { status: "completed" });
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to send recurring message ${messageId}:`, error);
+          await updateScheduledMessage(sessionId, messageId, {
+            lastError: error.message,
+            lastErrorTime: new Date().toISOString(),
+          });
+        }
+      });
+
+      scheduledTasks.set(messageId, task);
+
+      // Save the scheduled message with recurring information
+      await saveScheduledMessage(sessionId, {
+        id: messageId,
+        to,
+        message,
+        scheduledTime,
+        recurringOptions,
+        status: "active",
+        type: "recurring",
+      });
+    } else {
+      // Original one-time schedule logic
+      const scheduledDate = new Date(scheduledTime);
+      if (isNaN(scheduledDate)) {
+        throw new Error("Invalid scheduled time");
+      }
+
+      const cronTime = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} ${scheduledDate.getDate()} ${
+        scheduledDate.getMonth() + 1
+      } *`;
+
+      console.log("Cron time:", cronTime);
+
+      task = cron.schedule(cronTime, async () => {
+        try {
+          console.log("Sending scheduled message:", messageId);
+          await sendMessage(sessionId, to, message);
+          // Update message status in storage
+          await updateScheduledMessage(sessionId, messageId, { status: "sent" });
+        } catch (error) {
+          console.error(`Failed to send scheduled message ${messageId}:`, error);
+          // Update message status to failed
+          await updateScheduledMessage(sessionId, messageId, {
+            status: "failed",
+            error: error.message,
+          });
+        } finally {
+          task.stop();
+          scheduledTasks.delete(messageId);
+          // Remove message from storage after sent or failed
+          await removeScheduledMessage(sessionId, messageId);
+        }
+      });
+
+      scheduledTasks.set(messageId, task);
+      await saveScheduledMessage(sessionId, {
+        id: messageId,
+        to,
+        message,
+        scheduledTime,
+        status: "scheduled",
+        type: "one-time",
+      });
     }
 
-    const cronTime = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} ${scheduledDate.getDate()} ${
-      scheduledDate.getMonth() + 1
-    } *`;
-
-    console.log("Cron time:", cronTime);
-
-    const task = cron.schedule(cronTime, async () => {
-      try {
-        console.log("Sending scheduled message:", messageId);
-        await sendMessage(sessionId, to, message);
-        // Update message status in storage
-        await updateScheduledMessage(sessionId, messageId, { status: "sent" });
-      } catch (error) {
-        console.error(`Failed to send scheduled message ${messageId}:`, error);
-        // Update message status to failed
-        await updateScheduledMessage(sessionId, messageId, {
-          status: "failed",
-          error: error.message,
-        });
-      } finally {
-        task.stop();
-        scheduledTasks.delete(messageId);
-        // Remove message from storage after sent or failed
-        await removeScheduledMessage(sessionId, messageId);
-      }
-    });
-
-    scheduledTasks.set(messageId, task);
-    await saveScheduledMessage(sessionId, {
-      id: messageId,
-      to,
-      message,
-      scheduledTime,
-      status: "scheduled",
-    });
-
     return messageId;
+  };
+
+  // Add a new function to cancel recurring messages
+  const cancelRecurringMessage = async (sessionId, messageId) => {
+    if (scheduledTasks.has(messageId)) {
+      scheduledTasks.get(messageId).stop();
+      scheduledTasks.delete(messageId);
+    }
+
+    await updateScheduledMessage(sessionId, messageId, { status: "cancelled" });
+    return { success: true, message: "Recurring message cancelled" };
   };
 
   const getScheduledMessages = async (sessionId) => {
@@ -395,8 +528,7 @@ exports.createSessionManager = (io) => {
     return;
   };
 
-  // Bulk schedule message
-  // Add this function to your existing code
+  // Update the bulkScheduleMessages function to support recurring options
   const bulkScheduleMessages = async (sessionId, messages, delaySeconds = 0) => {
     // Validate input
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -429,15 +561,23 @@ exports.createSessionManager = (io) => {
           throw new Error("Message must have 'scheduledTime' or a delay must be specified");
         }
 
-        // Schedule the individual message
-        const messageId = await scheduleMessage(sessionId, msg.to, msg.message, scheduledTime);
+        // Schedule the individual message, passing recurring options if present
+        const messageId = await scheduleMessage(
+          sessionId,
+          msg.to,
+          msg.message,
+          scheduledTime,
+          msg.recurringOptions || null
+        );
 
         results.push({
           id: messageId,
           to: msg.to,
           message: msg.message,
           scheduledTime: scheduledTime,
-          status: "scheduled",
+          recurringOptions: msg.recurringOptions || null,
+          status: msg.recurringOptions ? "active" : "scheduled",
+          type: msg.recurringOptions ? "recurring" : "one-time",
         });
       } catch (error) {
         errors.push({

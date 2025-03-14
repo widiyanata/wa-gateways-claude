@@ -60,6 +60,33 @@
       #sessionTabs .nav-link {
         color: #333 !important;
       }
+      /* Media Preview Styles */
+      #media-preview-container {
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      #media-preview-content img {
+        max-width: 100%;
+        max-height: 300px;
+        object-fit: contain;
+      }
+      #media-preview-content video,
+      #media-preview-content audio {
+        max-width: 100%;
+      }
+      .media-file-icon {
+        font-size: 4rem;
+        color: #6c757d;
+      }
+      #media-file-info {
+        width: 100%;
+        margin-top: 1rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #dee2e6;
+      }
     </style>
   </head>
   <body class="bg-light">
@@ -372,6 +399,36 @@
 
                                 <button type="submit" class="btn btn-primary">Send Media</button>
                               </form>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Media Preview Column -->
+                        <div class="col-md-7">
+                          <div class="card">
+                            <div class="card-header">
+                              <h5 class="card-title m-0">Media Preview</h5>
+                            </div>
+                            <div class="card-body">
+                              <div
+                                id="media-preview-container"
+                                class="text-center p-3 bg-light rounded"
+                              >
+                                <div id="media-preview-placeholder">
+                                  <i class="bi bi-file-earmark-plus media-file-icon"></i>
+                                  <p class="mt-2 text-muted">Select a file to preview</p>
+                                </div>
+                                <div id="media-preview-content" style="display: none">
+                                  <!-- Preview content will be inserted here -->
+                                </div>
+                                <div id="media-file-info" style="display: none">
+                                  <div class="d-flex justify-content-between">
+                                    <span id="media-file-name" class="text-truncate"></span>
+                                    <span id="media-file-size" class="text-muted"></span>
+                                  </div>
+                                  <div id="media-file-type" class="text-muted small"></div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1696,6 +1753,196 @@
         document
           .getElementById("refresh-scheduled")
           .addEventListener("click", loadScheduledMessages);
+      });
+
+      // Media Preview Functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const mediaFileInput = document.getElementById("media-file");
+        const mediaPreviewPlaceholder = document.getElementById("media-preview-placeholder");
+        const mediaPreviewContent = document.getElementById("media-preview-content");
+        const mediaFileInfo = document.getElementById("media-file-info");
+        const mediaFileName = document.getElementById("media-file-name");
+        const mediaFileSize = document.getElementById("media-file-size");
+        const mediaFileType = document.getElementById("media-file-type");
+        const mediaUrlInput = document.getElementById("media-url");
+        const mediaTypeSelect = document.getElementById("media-type");
+
+        // Function to format file size
+        function formatFileSize(bytes) {
+          if (bytes === 0) return "0 Bytes";
+          const k = 1024;
+          const sizes = ["Bytes", "KB", "MB", "GB"];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+        }
+
+        // Function to clear preview
+        function clearPreview() {
+          mediaPreviewContent.innerHTML = "";
+          mediaPreviewContent.style.display = "none";
+          mediaPreviewPlaceholder.style.display = "block";
+          mediaFileInfo.style.display = "none";
+        }
+
+        // Function to show preview
+        function showPreview(file) {
+          // Clear previous preview
+          mediaPreviewContent.innerHTML = "";
+
+          // Show file info
+          mediaFileName.textContent = file.name;
+          mediaFileSize.textContent = formatFileSize(file.size);
+          mediaFileType.textContent = file.type;
+
+          // Create preview based on file type
+          if (file.type.startsWith("image/")) {
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file);
+            img.onload = function () {
+              URL.revokeObjectURL(this.src);
+            };
+            mediaPreviewContent.appendChild(img);
+          } else if (file.type.startsWith("video/")) {
+            const video = document.createElement("video");
+            video.src = URL.createObjectURL(file);
+            video.controls = true;
+            video.onload = function () {
+              URL.revokeObjectURL(this.src);
+            };
+            mediaPreviewContent.appendChild(video);
+          } else if (file.type.startsWith("audio/")) {
+            const audio = document.createElement("audio");
+            audio.src = URL.createObjectURL(file);
+            audio.controls = true;
+            audio.onload = function () {
+              URL.revokeObjectURL(this.src);
+            };
+            mediaPreviewContent.appendChild(audio);
+          } else {
+            // For documents and other files
+            const icon = document.createElement("i");
+            icon.className = "bi bi-file-earmark-text media-file-icon";
+            const fileTypeText = document.createElement("p");
+            fileTypeText.className = "mt-2";
+            fileTypeText.textContent = file.type || "Document";
+
+            mediaPreviewContent.appendChild(icon);
+            mediaPreviewContent.appendChild(fileTypeText);
+          }
+
+          // Show preview and hide placeholder
+          mediaPreviewContent.style.display = "block";
+          mediaPreviewPlaceholder.style.display = "none";
+          mediaFileInfo.style.display = "block";
+        }
+
+        // Handle file selection
+        if (mediaFileInput) {
+          mediaFileInput.addEventListener("change", function (e) {
+            const file = e.target.files[0];
+            if (file) {
+              showPreview(file);
+              // Clear URL input when file is selected
+              if (mediaUrlInput) {
+                mediaUrlInput.value = "";
+              }
+            } else {
+              clearPreview();
+            }
+          });
+        }
+
+        // Handle URL input
+        if (mediaUrlInput) {
+          mediaUrlInput.addEventListener("input", function () {
+            // Clear file input when URL is entered
+            if (this.value && mediaFileInput) {
+              mediaFileInput.value = "";
+              clearPreview();
+
+              // Show URL preview based on selected media type
+              const mediaType = mediaTypeSelect ? mediaTypeSelect.value : "image";
+              const url = this.value;
+
+              if (url) {
+                mediaPreviewContent.innerHTML = "";
+
+                if (mediaType === "image") {
+                  const img = document.createElement("img");
+                  img.src = url;
+                  img.onerror = function () {
+                    this.onerror = null;
+                    this.src = "";
+                    this.alt = "Image preview not available";
+                    this.style.display = "none";
+
+                    const errorMsg = document.createElement("p");
+                    errorMsg.className = "text-danger";
+                    errorMsg.textContent = "Unable to preview image URL";
+                    mediaPreviewContent.appendChild(errorMsg);
+                  };
+                  mediaPreviewContent.appendChild(img);
+                } else if (mediaType === "video") {
+                  const videoIcon = document.createElement("i");
+                  videoIcon.className = "bi bi-film media-file-icon";
+                  const urlText = document.createElement("p");
+                  urlText.className = "mt-2";
+                  urlText.textContent = "Video URL (preview not available)";
+
+                  mediaPreviewContent.appendChild(videoIcon);
+                  mediaPreviewContent.appendChild(urlText);
+                } else if (mediaType === "audio") {
+                  const audioIcon = document.createElement("i");
+                  audioIcon.className = "bi bi-music-note-beamed media-file-icon";
+                  const urlText = document.createElement("p");
+                  urlText.className = "mt-2";
+                  urlText.textContent = "Audio URL (preview not available)";
+
+                  mediaPreviewContent.appendChild(audioIcon);
+                  mediaPreviewContent.appendChild(urlText);
+                } else {
+                  const docIcon = document.createElement("i");
+                  docIcon.className = "bi bi-file-earmark-text media-file-icon";
+                  const urlText = document.createElement("p");
+                  urlText.className = "mt-2";
+                  urlText.textContent = "Document URL (preview not available)";
+
+                  mediaPreviewContent.appendChild(docIcon);
+                  mediaPreviewContent.appendChild(urlText);
+                }
+
+                // Show preview and hide placeholder
+                mediaPreviewContent.style.display = "block";
+                mediaPreviewPlaceholder.style.display = "none";
+
+                // Update file info
+                mediaFileName.textContent = url.split("/").pop() || "Remote file";
+                mediaFileSize.textContent = "Unknown size";
+                mediaFileType.textContent = mediaType;
+                mediaFileInfo.style.display = "block";
+              }
+            } else if (!this.value) {
+              clearPreview();
+            }
+          });
+        }
+
+        // Handle media type change for URL
+        if (mediaTypeSelect) {
+          mediaTypeSelect.addEventListener("change", function () {
+            if (mediaUrlInput && mediaUrlInput.value) {
+              // Trigger URL input handler to update preview
+              const event = new Event("input");
+              mediaUrlInput.dispatchEvent(event);
+            }
+          });
+        }
+
+        // Reset preview when form is reset
+        const mediaForm = document.getElementById("media-form");
+        if (mediaForm) {
+          mediaForm.addEventListener("reset", clearPreview);
+        }
       });
     </script>
   </body>

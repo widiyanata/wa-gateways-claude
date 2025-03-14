@@ -98,29 +98,108 @@ router.post("/send-message/:sessionId", async (req, res) => {
   }
 });
 
+// Upload file
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, "../uploads");
+    // Create the directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+// Filter function to validate file types
+const fileFilter = (req, file, cb) => {
+  // Accept images, videos, documents, audio
+  if (
+    file.mimetype.startsWith("image/") ||
+    file.mimetype.startsWith("video/") ||
+    file.mimetype.startsWith("audio/") ||
+    file.mimetype === "application/pdf" ||
+    file.mimetype.includes("document")
+  ) {
+    cb(null, true);
+  } else {
+    cb(new Error("Unsupported file type"), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 16 * 1024 * 1024 }, // 16MB limit
+});
 // Send media
-router.post("/send-media/:sessionId", async (req, res) => {
+router.post("/send-media/:sessionId", upload.single("media"), async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { to, caption, mediaUrl, mediaType } = req.body;
+    const { to, caption } = req.body;
 
-    if (!to || !mediaUrl || !mediaType) {
+    if (!to) {
       return res.status(400).json({
         success: false,
-        error: "Recipient, media URL, and media type are required",
+        error: "Recipient is required",
       });
     }
 
+    // Check if file was uploaded
+    if (!req.file) {
+      // Fall back to URL-based media if no file was uploaded
+      const { mediaUrl, mediaType } = req.body;
+
+      if (!mediaUrl || !mediaType) {
+        return res.status(400).json({
+          success: false,
+          error: "Either a file upload or media URL with type is required",
+        });
+      }
+
+      const result = await req.sessionManager.sendMedia(
+        sessionId,
+        to,
+        caption || "",
+        mediaUrl,
+        mediaType
+      );
+
+      return res.json({ success: true, data: result });
+    }
+
+    // If file was uploaded, use the file path
+    const mediaPath = req.file.path;
+    const mediaType = req.file.mimetype.startsWith("image/")
+      ? "image"
+      : req.file.mimetype.startsWith("video/")
+      ? "video"
+      : req.file.mimetype.startsWith("audio/")
+      ? "audio"
+      : "document";
+
+    // Use the file system path for sending media
     const result = await req.sessionManager.sendMedia(
       sessionId,
       to,
       caption || "",
-      mediaUrl,
+      mediaPath,
       mediaType
     );
 
     res.json({ success: true, data: result });
   } catch (error) {
+    // Clean up uploaded file if an error occurs
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
     res.status(500).json({ success: false, error: error.message });
   }
 });

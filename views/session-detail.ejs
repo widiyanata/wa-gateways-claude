@@ -291,7 +291,7 @@
                               <h5 class="card-title m-0">Send Media</h5>
                             </div>
                             <div class="card-body">
-                              <form id="media-form">
+                              <form id="media-form" class="needs-validation" novalidate>
                                 <div class="mb-3">
                                   <label for="media-phone" class="form-label">Phone Number</label>
                                   <div class="input-group">
@@ -304,42 +304,73 @@
                                       required
                                     />
                                   </div>
+                                  <div class="invalid-feedback">
+                                    Please enter a valid phone number
+                                  </div>
                                 </div>
-                                <div class="mb-3">
-                                  <label for="media-type" class="form-label">Media Type</label>
-                                  <select class="form-select" id="media-type" required>
-                                    <option value="">Select media type</option>
-                                    <option value="image">Image</option>
-                                    <option value="video">Video</option>
-                                    <option value="document">Document</option>
-                                  </select>
-                                </div>
-                                <div class="mb-3">
-                                  <label for="media-url" class="form-label">Media URL</label>
-                                  <input
-                                    type="url"
-                                    class="form-control"
-                                    id="media-url"
-                                    placeholder="https://example.com/image.jpg"
-                                    required
-                                  />
-                                </div>
+
                                 <div class="mb-3">
                                   <label for="media-caption" class="form-label"
                                     >Caption (optional)</label
                                   >
-                                  <textarea
-                                    class="form-control"
-                                    id="media-caption"
-                                    rows="2"
-                                    placeholder="Add a caption..."
-                                  ></textarea>
+                                  <input type="text" class="form-control" id="media-caption" />
                                 </div>
-                                <div class="d-grid">
-                                  <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-file-earmark-image"></i> Send Media
-                                  </button>
+
+                                <div class="mb-3">
+                                  <label class="form-label"
+                                    >Choose one of the following options:</label
+                                  >
+
+                                  <!-- File upload option -->
+                                  <div class="card mb-3">
+                                    <div class="card-body">
+                                      <h6 class="card-subtitle mb-2 text-muted">
+                                        Option 1: Upload a file
+                                      </h6>
+                                      <div class="mb-3">
+                                        <label for="media-file" class="form-label"
+                                          >Select Media File</label
+                                        >
+                                        <input
+                                          type="file"
+                                          class="form-control"
+                                          id="media-file"
+                                          accept="image/*,video/*,audio/*,application/pdf"
+                                        />
+                                        <div class="form-text">
+                                          Supported formats: Images, Videos, Audio, PDF (max 16MB)
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- URL option -->
+                                  <div class="card">
+                                    <div class="card-body">
+                                      <h6 class="card-subtitle mb-2 text-muted">
+                                        Option 2: Use a media URL
+                                      </h6>
+                                      <div class="mb-3">
+                                        <label for="media-url" class="form-label">Media URL</label>
+                                        <input type="url" class="form-control" id="media-url" />
+                                      </div>
+
+                                      <div class="mb-3">
+                                        <label for="media-type" class="form-label"
+                                          >Media Type</label
+                                        >
+                                        <select class="form-select" id="media-type">
+                                          <option value="image">Image</option>
+                                          <option value="video">Video</option>
+                                          <option value="audio">Audio</option>
+                                          <option value="document">Document</option>
+                                        </select>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
+
+                                <button type="submit" class="btn btn-primary">Send Media</button>
                               </form>
                             </div>
                           </div>
@@ -1454,16 +1485,40 @@
           e.preventDefault();
           const phone = document.getElementById("media-phone").value;
           const mediaType = document.getElementById("media-type").value;
-          const mediaUrl = document.getElementById("media-url").value;
           const caption = document.getElementById("media-caption").value;
+          const mediaFile = document.getElementById("media-file").files[0]; // New file input element
+          const mediaUrl = document.getElementById("media-url").value;
 
-          // Send media
           try {
-            const response = await fetch(`/api/send-media/${sessionId}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ to: phone, mediaUrl, mediaType, caption }),
-            });
+            let response;
+
+            // Check if a file is selected
+            if (mediaFile) {
+              // Use FormData for file upload
+              const formData = new FormData();
+              formData.append("to", phone);
+              formData.append("caption", caption);
+              formData.append("media", mediaFile);
+
+              response = await fetch(`/api/send-media/${sessionId}`, {
+                method: "POST",
+                body: formData,
+                // Don't set Content-Type header when using FormData
+                // Browser will set it automatically with correct boundary
+              });
+            } else {
+              // Use JSON for URL-based media
+              if (!mediaUrl || !mediaType) {
+                throw new Error("Please provide either a file or a media URL with type");
+              }
+
+              response = await fetch(`/api/send-media/${sessionId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ to: phone, mediaUrl, mediaType, caption }),
+              });
+            }
+
             const result = await response.json();
             if (result.success) {
               document.getElementById("statusTitle").textContent = "Success";

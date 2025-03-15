@@ -79,7 +79,7 @@ app.post("/session/:sessionId/bulk-message", async (req, res) => {
     let messages = [];
     dataJson.forEach(async (item) => {
       messages.push({
-        to: item.no,
+        to: item.to,
         message: helpers.renderTemplate(template, item),
         scheduledTime:
           helpers.formatDateToYYYYMMDD(item.tanggal) + " " + helpers.getRandomTime(8, 16),

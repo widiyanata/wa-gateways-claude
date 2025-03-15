@@ -90,1178 +90,926 @@
     </style>
   </head>
   <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container">
-        <a class="navbar-brand" href="/">WA Gateway</a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="/">Dashboard</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/documentation">API Docs</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/settings">Settings</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-
-    <div class="container py-4">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h1 id="session-title"><%= sessionId %></h1>
-              <div id="session-status"></div>
-              <!-- <img id="qrCode" src="#" alt="QR Code" /> -->
-            </div>
-            <a href="/" class="btn btn-outline-secondary">
-              <i class="bi bi-arrow-left"></i> Back to Dashboard
-            </a>
+    <div id="app">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+          <a class="navbar-brand" href="/">WA Gateway</a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+              <li class="nav-item">
+                <a class="nav-link" href="/">Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/documentation">API Docs</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/settings">Settings</a>
+              </li>
+            </ul>
           </div>
         </div>
-        <div class="col-md-12">
-          <ul class="nav nav-tabs" id="sessionTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link active"
-                id="test-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#test"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-send"></i> Send Message
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="logs-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#logs"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-list-ul"></i> Activity Logs
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="settings-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#settings"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-gear"></i> Session Settings
-              </button>
-            </li>
-          </ul>
+      </nav>
 
-          <div
-            class="tab-content bg-white p-3 rounded border border-top-0 shadow-sm"
-            id="sessionTabsContent"
-          >
-            <!-- Test Message Tab -->
-            <div class="tab-pane fade show active" id="test" role="tabpanel">
-              <div class="row">
-                <div class="col-12">
-                  <!-- <h3 class="mt-2 mb-4">Send a Messages</h3> -->
-                </div>
-                <div class="col-md-5">
-                  <!-- Nav tabs -->
-                  <ul
-                    class="nav nav-pills nav-justified p-1 border bg-light rounded"
-                    id="myTab"
-                    role="tablist"
-                  >
-                    <li class="nav-item" role="presentation">
-                      <button
-                        class="nav-link active"
-                        id="home-tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#home"
-                        type="button"
-                        role="tab"
-                        aria-controls="home"
-                        aria-selected="true"
-                      >
-                        <i class="bi bi-card-text"></i>
-                        Text
-                      </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                      <button
-                        class="nav-link"
-                        id="messages-tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#messages"
-                        type="button"
-                        role="tab"
-                        aria-controls="messages"
-                        aria-selected="false"
-                      >
-                        <i class="bi bi-images"></i>
-                        Media
-                      </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                      <button
-                        class="nav-link"
-                        id="profile-tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#profile"
-                        type="button"
-                        role="tab"
-                        aria-controls="profile"
-                        aria-selected="false"
-                      >
-                        <i class="bi bi-clock-history"></i>
-                        Schedule
-                      </button>
-                    </li>
-                  </ul>
-                </div>
+      <div class="container py-4">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h1 id="session-title"><%= sessionId %></h1>
+                <div id="session-status"></div>
+                <!-- <img id="qrCode" src="#" alt="QR Code" /> -->
+              </div>
+              <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+              </a>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <ul class="nav nav-tabs" id="sessionTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link active"
+                  id="test-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#test"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-send"></i> Send Message
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="logs-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#logs"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-list-ul"></i> Activity Logs
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="settings-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#settings"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-gear"></i> Session Settings
+                </button>
+              </li>
+            </ul>
 
-                <div class="col-md-12">
-                  <!-- Tab panes -->
-                  <div class="tab-content">
-                    <div
-                      class="tab-pane active"
-                      id="home"
-                      role="tabpanel"
-                      aria-labelledby="home-tab"
+            <div
+              class="tab-content bg-white p-3 rounded border border-top-0 shadow-sm"
+              id="sessionTabsContent"
+            >
+              <!-- Test Message Tab -->
+              <div class="tab-pane fade show active" id="test" role="tabpanel">
+                <div class="row">
+                  <div class="col-12">
+                    <!-- <h3 class="mt-2 mb-4">Send a Messages</h3> -->
+                  </div>
+                  <div class="col-md-5">
+                    <!-- Nav tabs -->
+                    <ul
+                      class="nav nav-pills nav-justified p-1 border bg-light rounded"
+                      id="myTab"
+                      role="tablist"
                     >
-                      <div class="row">
-                        <div class="col-md-5">
-                          <div class="card">
-                            <div class="card-header">
-                              <h5 class="card-title m-0">Send Test Message</h5>
-                            </div>
-                            <div class="card-body">
-                              <form id="message-form">
-                                <div class="mb-3">
-                                  <label for="phone" class="form-label">Phone Number</label>
-                                  <div class="input-group">
-                                    <span class="input-group-text">+</span>
+                      <li class="nav-item" role="presentation">
+                        <button
+                          class="nav-link active"
+                          id="home-tab"
+                          data-bs-toggle="tab"
+                          data-bs-target="#home"
+                          type="button"
+                          role="tab"
+                          aria-controls="home"
+                          aria-selected="true"
+                        >
+                          <i class="bi bi-card-text"></i>
+                          Text
+                        </button>
+                      </li>
+                      <li class="nav-item" role="presentation">
+                        <button
+                          class="nav-link"
+                          id="messages-tab"
+                          data-bs-toggle="tab"
+                          data-bs-target="#messages"
+                          type="button"
+                          role="tab"
+                          aria-controls="messages"
+                          aria-selected="false"
+                        >
+                          <i class="bi bi-images"></i>
+                          Media
+                        </button>
+                      </li>
+                      <li class="nav-item" role="presentation">
+                        <button
+                          class="nav-link"
+                          id="profile-tab"
+                          data-bs-toggle="tab"
+                          data-bs-target="#profile"
+                          type="button"
+                          role="tab"
+                          aria-controls="profile"
+                          aria-selected="false"
+                        >
+                          <i class="bi bi-clock-history"></i>
+                          Schedule
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div class="col-md-12">
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                      <div
+                        class="tab-pane active"
+                        id="home"
+                        role="tabpanel"
+                        aria-labelledby="home-tab"
+                      >
+                        <div class="row">
+                          <div class="col-md-5">
+                            <div class="card">
+                              <div class="card-header">
+                                <h5>Send Message</h5>
+                              </div>
+                              <div class="card-body">
+                                <form @submit.prevent="sendMessage" id="message-form">
+                                  <div class="mb-3">
+                                    <label for="phone" class="form-label">Phone Number</label>
                                     <input
-                                      type="tel"
+                                      type="text"
                                       class="form-control"
                                       id="phone"
-                                      placeholder="e.g. 628123456789"
+                                      v-model="messageForm.phone"
+                                      placeholder="+1234567890"
                                       required
                                     />
                                   </div>
-                                  <small class="form-text text-muted">
-                                    Enter the number with country code without + or spaces.
-                                  </small>
-                                </div>
-                                <div class="mb-3">
-                                  <label for="message" class="form-label">Message</label>
-                                  <textarea
-                                    class="form-control"
-                                    id="message"
-                                    rows="4"
-                                    placeholder="Type your message here..."
-                                    required
-                                  ></textarea>
-                                </div>
-                                <div class="d-grid">
+                                  <div class="mb-3">
+                                    <label for="message" class="form-label">Message</label>
+                                    <textarea
+                                      class="form-control"
+                                      id="message"
+                                      v-model="messageForm.message"
+                                      rows="3"
+                                      required
+                                    ></textarea>
+                                  </div>
+                                  <div class="card mb-3">
+                                    <div class="card-header">
+                                      <h6 class="mb-0">Preview</h6>
+                                    </div>
+                                    <div class="card-body">
+                                      <p>
+                                        <strong>To:</strong>
+                                        <span id="preview-to">{{
+                                          messageForm.phone || "Not specified"
+                                        }}</span>
+                                      </p>
+                                      <div
+                                        id="preview-content"
+                                        v-html="'<p>' + (messageForm.message || 'No message content') + '</p>'"
+                                      ></div>
+                                    </div>
+                                  </div>
                                   <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-send"></i> Send Message
+                                    Send Message
                                   </button>
-                                </div>
-                              </form>
+                                </form>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div class="col-md-7">
-                          <div class="card">
-                            <div class="card-header">
-                              <h5 class="card-title m-0">Message Preview</h5>
-                            </div>
-                            <div class="card-body">
-                              <div class="mb-2" id="preview-recipient">
-                                <strong>To:</strong> <span id="preview-to">-</span>
+                          <div class="col-md-7">
+                            <div class="card">
+                              <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                  <h5 class="mb-0">Message Logs</h5>
+                                  <button
+                                    class="btn btn-sm btn-outline-secondary"
+                                    @click="clearLogs"
+                                  >
+                                    Clear
+                                  </button>
+                                </div>
                               </div>
-                              <div class="p-3 bg-light rounded" id="preview-content">
-                                <em class="text-muted">Your message will appear here...</em>
+                              <div class="card-body">
+                                <div
+                                  id="message-log"
+                                  class="overflow-auto"
+                                  style="max-height: 300px"
+                                >
+                                  <div
+                                    v-if="messageLogs.length === 0"
+                                    class="text-center py-4 text-muted"
+                                  >
+                                    <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
+                                    <p class="mt-2">No activity yet. Send a message to see logs.</p>
+                                  </div>
+                                  <div
+                                    v-for="(msg, index) in messageLogs"
+                                    :key="index"
+                                    :class="['message', msg.key.fromMe ? 'message-sent' : 'message-received']"
+                                  >
+                                    {{ msg.message.conversation || "No message content" }}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="card">
+                              <div class="card-header">
+                                <h5 class="card-title m-0">Message Preview</h5>
+                              </div>
+                              <div class="card-body">
+                                <div class="mb-2" id="preview-recipient">
+                                  <strong>To:</strong> <span id="preview-to">-</span>
+                                </div>
+                                <div class="p-3 bg-light rounded" id="preview-content">
+                                  <em class="text-muted">Your message will appear here...</em>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div
-                      class="tab-pane"
-                      id="messages"
-                      role="tabpanel"
-                      aria-labelledby="messages-tab"
-                    >
-                      <div class="row">
-                        <div class="col-md-5">
-                          <div class="card">
-                            <div class="card-header">
-                              <h5 class="card-title m-0">Send Media</h5>
-                            </div>
-                            <div class="card-body">
-                              <form id="media-form" class="needs-validation" novalidate>
-                                <div class="mb-3">
-                                  <label for="media-phone" class="form-label">Phone Number</label>
-                                  <div class="input-group">
-                                    <span class="input-group-text">+</span>
+                      <div
+                        class="tab-pane"
+                        id="messages"
+                        role="tabpanel"
+                        aria-labelledby="messages-tab"
+                      >
+                        <div class="row">
+                          <div class="col-md-5">
+                            <div class="card">
+                              <div class="card-header">
+                                <h5>Send Media</h5>
+                              </div>
+                              <div class="card-body">
+                                <form @submit.prevent="sendMedia" id="media-form">
+                                  <div class="mb-3">
+                                    <label for="media-phone" class="form-label">Phone Number</label>
                                     <input
-                                      type="tel"
+                                      type="text"
                                       class="form-control"
                                       id="media-phone"
-                                      placeholder="e.g. 628123456789"
+                                      v-model="mediaForm.phone"
+                                      placeholder="+1234567890"
                                       required
                                     />
                                   </div>
-                                  <div class="invalid-feedback">
-                                    Please enter a valid phone number
+                                  <div class="mb-3">
+                                    <label for="media-type" class="form-label">Media Type</label>
+                                    <select
+                                      class="form-select"
+                                      id="media-type"
+                                      v-model="mediaForm.mediaType"
+                                    >
+                                      <option value="image">Image</option>
+                                      <option value="video">Video</option>
+                                      <option value="audio">Audio</option>
+                                      <option value="document">Document</option>
+                                    </select>
                                   </div>
-                                </div>
-
-                                <div class="mb-3">
-                                  <label for="media-caption" class="form-label"
-                                    >Caption (optional)</label
-                                  >
-                                  <input type="text" class="form-control" id="media-caption" />
-                                </div>
-
-                                <div class="mb-3">
-                                  <label class="form-label"
-                                    >Choose one of the following options:</label
-                                  >
-
-                                  <!-- File upload option -->
+                                  <div class="mb-3">
+                                    <label for="media-caption" class="form-label"
+                                      >Caption (Optional)</label
+                                    >
+                                    <input
+                                      type="text"
+                                      class="form-control"
+                                      id="media-caption"
+                                      v-model="mediaForm.caption"
+                                    />
+                                  </div>
+                                  <div class="mb-3">
+                                    <label for="media-file" class="form-label"
+                                      >Upload Media File</label
+                                    >
+                                    <input
+                                      type="file"
+                                      class="form-control"
+                                      id="media-file"
+                                      @change="handleFileChange"
+                                    />
+                                  </div>
+                                  <div class="mb-3">
+                                    <label for="media-url" class="form-label"
+                                      >Or Enter Media URL</label
+                                    >
+                                    <input
+                                      type="text"
+                                      class="form-control"
+                                      id="media-url"
+                                      v-model="mediaForm.mediaUrl"
+                                      @input="handleUrlInput"
+                                    />
+                                  </div>
                                   <div class="card mb-3">
-                                    <div class="card-body">
-                                      <h6 class="card-subtitle mb-2 text-muted">
-                                        Option 1: Upload a file
-                                      </h6>
-                                      <div class="mb-3">
-                                        <label for="media-file" class="form-label"
-                                          >Select Media File</label
-                                        >
-                                        <input
-                                          type="file"
-                                          class="form-control"
-                                          id="media-file"
-                                          accept="image/*,video/*,audio/*,application/pdf"
-                                        />
-                                        <div class="form-text">
-                                          Supported formats: Images, Videos, Audio, PDF (max 16MB)
-                                        </div>
+                                    <div class="card-header">
+                                      <h6 class="mb-0">Media Preview</h6>
+                                    </div>
+                                    <div class="card-body text-center">
+                                      <div
+                                        id="media-preview-placeholder"
+                                        v-show="!showMediaPreview"
+                                      >
+                                        <i
+                                          class="bi bi-image"
+                                          style="font-size: 3rem; color: #ccc"
+                                        ></i>
+                                        <p class="text-muted mt-2">
+                                          Select or enter media to preview
+                                        </p>
+                                      </div>
+                                      <div
+                                        id="media-preview-content"
+                                        v-show="showMediaPreview"
+                                        v-html="mediaPreviewContent"
+                                      ></div>
+                                      <div
+                                        id="media-file-info"
+                                        class="mt-3 text-start"
+                                        v-show="showMediaPreview"
+                                      >
+                                        <p>
+                                          <strong>Name:</strong>
+                                          <span id="media-file-name">{{ mediaFileInfo.name }}</span>
+                                        </p>
+                                        <p>
+                                          <strong>Size:</strong>
+                                          <span id="media-file-size">{{ mediaFileInfo.size }}</span>
+                                        </p>
+                                        <p>
+                                          <strong>Type:</strong>
+                                          <span id="media-file-type">{{ mediaFileInfo.type }}</span>
+                                        </p>
                                       </div>
                                     </div>
                                   </div>
-
-                                  <!-- URL option -->
-                                  <div class="card">
-                                    <div class="card-body">
-                                      <h6 class="card-subtitle mb-2 text-muted">
-                                        Option 2: Use a media URL
-                                      </h6>
-                                      <div class="mb-3">
-                                        <label for="media-url" class="form-label">Media URL</label>
-                                        <input type="url" class="form-control" id="media-url" />
-                                      </div>
-
-                                      <div class="mb-3">
-                                        <label for="media-type" class="form-label"
-                                          >Media Type</label
-                                        >
-                                        <select class="form-select" id="media-type">
-                                          <option value="image">Image</option>
-                                          <option value="video">Video</option>
-                                          <option value="audio">Audio</option>
-                                          <option value="document">Document</option>
-                                        </select>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <button type="submit" class="btn btn-primary">Send Media</button>
-                              </form>
+                                  <button type="submit" class="btn btn-primary">Send Media</button>
+                                  <button
+                                    type="reset"
+                                    class="btn btn-secondary ms-2"
+                                    @click="clearMediaPreview"
+                                  >
+                                    Reset
+                                  </button>
+                                </form>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <!-- Media Preview Column -->
-                        <div class="col-md-7">
-                          <div class="card">
-                            <div class="card-header">
-                              <h5 class="card-title m-0">Media Preview</h5>
-                            </div>
-                            <div class="card-body">
-                              <div
-                                id="media-preview-container"
-                                class="text-center p-3 bg-light rounded"
-                              >
-                                <div id="media-preview-placeholder">
-                                  <i class="bi bi-file-earmark-plus media-file-icon"></i>
-                                  <p class="mt-2 text-muted">Select a file to preview</p>
-                                </div>
-                                <div id="media-preview-content" style="display: none">
-                                  <!-- Preview content will be inserted here -->
-                                </div>
-                                <div id="media-file-info" style="display: none">
-                                  <div class="d-flex justify-content-between">
-                                    <span id="media-file-name" class="text-truncate"></span>
-                                    <span id="media-file-size" class="text-muted"></span>
+                          <!-- Media Preview Column -->
+                          <div class="col-md-7">
+                            <div class="card">
+                              <div class="card-header">
+                                <h5 class="card-title m-0">Media Preview</h5>
+                              </div>
+                              <div class="card-body">
+                                <div
+                                  id="media-preview-container"
+                                  class="text-center p-3 bg-light rounded"
+                                >
+                                  <div id="media-preview-placeholder">
+                                    <i class="bi bi-file-earmark-plus media-file-icon"></i>
+                                    <p class="mt-2 text-muted">Select a file to preview</p>
                                   </div>
-                                  <div id="media-file-type" class="text-muted small"></div>
+                                  <div id="media-preview-content" style="display: none">
+                                    <!-- Preview content will be inserted here -->
+                                  </div>
+                                  <div id="media-file-info" style="display: none">
+                                    <div class="d-flex justify-content-between">
+                                      <span id="media-file-name" class="text-truncate"></span>
+                                      <span id="media-file-size" class="text-muted"></span>
+                                    </div>
+                                    <div id="media-file-type" class="text-muted small"></div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div
-                      class="tab-pane"
-                      id="profile"
-                      role="tabpanel"
-                      aria-labelledby="profile-tab"
-                    >
-                      <!-- Schedule Message -->
-                      <div class="row">
-                        <div class="col-md-5">
-                          <div class="card">
-                            <div class="card-header pb-0 border-bottom-0">
-                              <!-- Nav tabs -->
-                              <ul
-                                class="nav nav-tabs nav-fill nav-justified"
-                                id="schedule-tabs"
-                                role="tablist"
-                              >
-                                <li class="nav-item" role="presentation">
-                                  <button
-                                    class="nav-link active"
-                                    id="schedule-single-tab"
-                                    data-bs-toggle="tab"
-                                    data-bs-target="#schedule-single"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="home"
-                                    aria-selected="true"
-                                  >
-                                    Schedule Message
-                                  </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                  <button
-                                    class="nav-link"
-                                    id="schedule-bulk-tab"
-                                    data-bs-toggle="tab"
-                                    data-bs-target="#schedule-bulk"
-                                    type="button"
-                                    role="tab"
-                                    aria-controls="profile"
-                                    aria-selected="false"
-                                  >
-                                    Schedule Bulk
-                                  </button>
-                                </li>
-                              </ul>
-                            </div>
-                            <!-- Tab panes -->
-                            <div class="tab-content">
-                              <div
-                                class="tab-pane active"
-                                id="schedule-single"
-                                role="tabpanel"
-                                aria-labelledby="home-tab"
-                              >
-                                <div class="card-body">
-                                  <form id="schedule-form">
-                                    <div class="mb-3">
-                                      <label for="schedule-phone" class="form-label"
-                                        >Phone Number</label
-                                      >
-                                      <div class="input-group">
-                                        <span class="input-group-text">+</span>
+                      <div
+                        class="tab-pane"
+                        id="profile"
+                        role="tabpanel"
+                        aria-labelledby="profile-tab"
+                      >
+                        <!-- Schedule Message -->
+                        <div class="row">
+                          <div class="col-md-5">
+                            <div class="card">
+                              <div class="card-header pb-0 border-bottom-0">
+                                <!-- Nav tabs -->
+                                <ul
+                                  class="nav nav-tabs nav-fill nav-justified"
+                                  id="schedule-tabs"
+                                  role="tablist"
+                                >
+                                  <li class="nav-item" role="presentation">
+                                    <button
+                                      class="nav-link active"
+                                      id="schedule-single-tab"
+                                      data-bs-toggle="tab"
+                                      data-bs-target="#schedule-single"
+                                      type="button"
+                                      role="tab"
+                                      aria-controls="home"
+                                      aria-selected="true"
+                                    >
+                                      Schedule Message
+                                    </button>
+                                  </li>
+                                  <li class="nav-item" role="presentation">
+                                    <button
+                                      class="nav-link"
+                                      id="schedule-bulk-tab"
+                                      data-bs-toggle="tab"
+                                      data-bs-target="#schedule-bulk"
+                                      type="button"
+                                      role="tab"
+                                      aria-controls="profile"
+                                      aria-selected="false"
+                                    >
+                                      Schedule Bulk
+                                    </button>
+                                  </li>
+                                </ul>
+                              </div>
+                              <!-- Tab panes -->
+                              <div class="tab-content">
+                                <div
+                                  class="tab-pane active"
+                                  id="schedule-single"
+                                  role="tabpanel"
+                                  aria-labelledby="home-tab"
+                                >
+                                  <div class="card-body">
+                                    <form @submit.prevent="scheduleMessage" id="schedule-form">
+                                      <div class="mb-3">
+                                        <label for="schedule-phone" class="form-label"
+                                          >Phone Number</label
+                                        >
                                         <input
-                                          type="tel"
+                                          type="text"
                                           class="form-control"
                                           id="schedule-phone"
-                                          placeholder="e.g. 628123456789"
+                                          v-model="scheduleForm.phone"
+                                          placeholder="+1234567890"
                                           required
                                         />
                                       </div>
-                                    </div>
-                                    <div class="mb-3">
-                                      <label for="schedule-message" class="form-label"
-                                        >Message</label
+                                      <div class="mb-3">
+                                        <label for="schedule-message" class="form-label"
+                                          >Message</label
+                                        >
+                                        <textarea
+                                          class="form-control"
+                                          id="schedule-message"
+                                          v-model="scheduleForm.message"
+                                          rows="3"
+                                          required
+                                        ></textarea>
+                                      </div>
+                                      <div class="mb-3">
+                                        <label for="scheduled-time" class="form-label"
+                                          >Schedule Time</label
+                                        >
+                                        <input
+                                          type="datetime-local"
+                                          class="form-control"
+                                          id="scheduled-time"
+                                          v-model="scheduleForm.scheduledTime"
+                                          required
+                                        />
+                                      </div>
+                                      <div class="mb-3 form-check">
+                                        <input
+                                          type="checkbox"
+                                          class="form-check-input"
+                                          id="isRecurring"
+                                          v-model="scheduleForm.isRecurring"
+                                        />
+                                        <label class="form-check-label" for="isRecurring"
+                                          >Set as recurring</label
+                                        >
+                                      </div>
+                                      <div
+                                        id="recurringOptions"
+                                        v-show="scheduleForm.isRecurring"
+                                        class="mb-3 ps-4 border-start"
                                       >
-                                      <textarea
-                                        class="form-control"
-                                        id="schedule-message"
-                                        rows="3"
-                                        placeholder="Type your message here..."
-                                        required
-                                      ></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                      <label for="scheduled-time" class="form-label"
-                                        >Scheduled Time</label
-                                      >
-                                      <input
-                                        type="datetime-local"
-                                        class="form-control"
-                                        id="scheduled-time"
-                                        required
-                                      />
-                                    </div>
-
-                                    <div class="d-grid">
+                                        <div class="mb-3">
+                                          <div class="form-check">
+                                            <input
+                                              class="form-check-input"
+                                              type="radio"
+                                              name="recurringType"
+                                              id="daily"
+                                              value="daily"
+                                              v-model="scheduleForm.recurringType"
+                                            />
+                                            <label class="form-check-label" for="daily"
+                                              >Daily</label
+                                            >
+                                          </div>
+                                          <div class="form-check">
+                                            <input
+                                              class="form-check-input"
+                                              type="radio"
+                                              name="recurringType"
+                                              id="weekly"
+                                              value="weekly"
+                                              v-model="scheduleForm.recurringType"
+                                            />
+                                            <label class="form-check-label" for="weekly"
+                                              >Weekly</label
+                                            >
+                                          </div>
+                                          <div class="form-check">
+                                            <input
+                                              class="form-check-input"
+                                              type="radio"
+                                              name="recurringType"
+                                              id="monthly"
+                                              value="monthly"
+                                              v-model="scheduleForm.recurringType"
+                                            />
+                                            <label class="form-check-label" for="monthly"
+                                              >Monthly</label
+                                            >
+                                          </div>
+                                          <div class="form-check">
+                                            <input
+                                              class="form-check-input"
+                                              type="radio"
+                                              name="recurringType"
+                                              id="custom"
+                                              value="custom"
+                                              v-model="scheduleForm.recurringType"
+                                            />
+                                            <label class="form-check-label" for="custom"
+                                              >Custom Days</label
+                                            >
+                                          </div>
+                                        </div>
+                                        <div
+                                          id="customDaysSelection"
+                                          v-show="scheduleForm.recurringType === 'custom'"
+                                          class="mb-3"
+                                        >
+                                          <label class="form-label">Select Days:</label>
+                                          <div class="d-flex flex-wrap gap-2">
+                                            <div
+                                              v-for="day in daysList"
+                                              :key="day"
+                                              class="form-check"
+                                            >
+                                              <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                :id="'day-' + day"
+                                                v-model="scheduleForm.selectedDays[day]"
+                                              />
+                                              <label class="form-check-label" :for="'day-' + day">{{
+                                                capitalizeFirstLetter(day)
+                                              }}</label>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="mb-3">
+                                          <label for="endDate" class="form-label"
+                                            >End Date (Optional)</label
+                                          >
+                                          <input
+                                            type="date"
+                                            class="form-control"
+                                            id="endDate"
+                                            v-model="scheduleForm.endDate"
+                                          />
+                                        </div>
+                                      </div>
                                       <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-calendar-plus"></i> Schedule Message
+                                        Schedule Message
                                       </button>
-                                    </div>
-                                  </form>
-                                </div>
-                                <!-- Recurring -->
-                                <div id="recurringSchedule" class="card-body">
-                                  <div class="form-check form-switch mb-3">
-                                    <input
-                                      class="form-check-input"
-                                      type="checkbox"
-                                      id="isRecurring"
-                                      name="isRecurring"
-                                    />
-                                    <label class="form-check-label" for="isRecurring"
-                                      >Set as recurring message</label
-                                    >
-                                  </div>
-
-                                  <div
-                                    id="recurringOptions"
-                                    class="p-3 bg-light rounded mb-4 d-none"
-                                  >
-                                    <div class="mb-1">
-                                      <label class="block text-gray-700 mb-2">Recurring Type</label>
-                                      <div class="flex flex-col space-y-2">
-                                        <label class="inline-flex items-center">
-                                          <input
-                                            type="radio"
-                                            name="recurringType"
-                                            value="daily"
-                                            checked
-                                            class="mr-2"
-                                          />
-                                          <span>Daily (send every day at the scheduled time)</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input
-                                            type="radio"
-                                            name="recurringType"
-                                            value="weekly"
-                                            class="mr-2"
-                                          />
-                                          <span>Weekly (send every week on the same day)</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input
-                                            type="radio"
-                                            name="recurringType"
-                                            value="monthly"
-                                            class="mr-2"
-                                          />
-                                          <span>Monthly (send every month on the same day)</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input
-                                            type="radio"
-                                            name="recurringType"
-                                            value="custom"
-                                            class="mr-2"
-                                          />
-                                          <span>Custom (select specific days)</span>
-                                        </label>
-                                      </div>
-                                    </div>
-
-                                    <div id="customDaysSelection" class="ps-3 mb-3 d-none">
-                                      <label class="block text-gray-700 mb-2">Select Days</label>
-                                      <div class="grid grid-cols-2 gap-2">
-                                        <label class="inline-flex items-center">
-                                          <input type="checkbox" name="day-monday" class="mr-2" />
-                                          <span>Monday</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input type="checkbox" name="day-tuesday" class="mr-2" />
-                                          <span>Tuesday</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input
-                                            type="checkbox"
-                                            name="day-wednesday"
-                                            class="mr-2"
-                                          />
-                                          <span>Wednesday</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input type="checkbox" name="day-thursday" class="mr-2" />
-                                          <span>Thursday</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input type="checkbox" name="day-friday" class="mr-2" />
-                                          <span>Friday</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input type="checkbox" name="day-saturday" class="mr-2" />
-                                          <span>Saturday</span>
-                                        </label>
-                                        <label class="inline-flex items-center">
-                                          <input type="checkbox" name="day-sunday" class="mr-2" />
-                                          <span>Sunday</span>
-                                        </label>
-                                      </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                      <label class="block text-gray-700 mb-2" for="endDate"
-                                        >End Date (Optional)</label
-                                      >
-                                      <input
-                                        type="date"
-                                        id="endDate"
-                                        name="endDate"
-                                        class="w-full px-3 py-1 border rounded"
-                                      />
-                                      <p class="text-sm text-gray-500 mt-1">
-                                        Leave empty for indefinite recurring
-                                      </p>
-                                    </div>
+                                    </form>
                                   </div>
                                 </div>
-                                <!-- / -->
-                              </div>
-                              <div
-                                class="tab-pane"
-                                id="schedule-bulk"
-                                role="tabpanel"
-                                aria-labelledby="schedule-bulk-tab"
-                              >
-                                <div class="card-body">
-                                  <form
-                                    id="bulkMessageForm"
-                                    action="/session/<%= sessionId %>/bulk-message"
-                                    method="post"
-                                  >
-                                    <div class="mb-1">
-                                      <label for="excelFile" class="form-label"
-                                        >Upload Excel File</label
-                                      >
+                                <div
+                                  class="tab-pane"
+                                  id="schedule-bulk"
+                                  role="tabpanel"
+                                  aria-labelledby="schedule-bulk-tab"
+                                >
+                                  <div class="card-body">
+                                    <form id="bulkMessageForm" @submit.prevent="submitForm">
+                                      <div class="mb-1">
+                                        <label for="excelFile" class="form-label"
+                                          >Upload Excel File</label
+                                        >
+                                        <input
+                                          class="form-control"
+                                          type="file"
+                                          id="excelFile"
+                                          accept=".xlsx,.xls"
+                                          @change="handleFileUpload"
+                                        />
+                                        <small class="text-muted"
+                                          >Required columns: to, name. Optional: message,
+                                          scheduledTime</small
+                                        >
+                                      </div>
+
+                                      <div class="mb-1">
+                                        <label for="template" class="form-label"
+                                          >Message Template</label
+                                        >
+                                        <small
+                                          class="text-muted badge"
+                                          v-html="parametersInfo"
+                                        ></small>
+                                        <textarea
+                                          v-model="template"
+                                          id="template"
+                                          class="form-control"
+                                          rows="4"
+                                          placeholder="hello {{ name }}"
+                                        ></textarea>
+                                      </div>
+
+                                      <div class="mb-1">
+                                        <label class="form-label mb-0 control-label"
+                                          >Time Settings</label
+                                        >
+                                        <div class="row g-1">
+                                          <div class="col-md-3 col-6">
+                                            <label for="minHour" class="form-label"
+                                              >Start Hour</label
+                                            >
+                                            <input
+                                              type="number"
+                                              id="minHour"
+                                              v-model.number="timeConfig.minHour"
+                                              class="form-control form-control-sm"
+                                              min="0"
+                                              max="23"
+                                            />
+                                          </div>
+                                          <div class="col-md-3 col-6">
+                                            <label for="maxHour" class="form-label">End Hour</label>
+                                            <input
+                                              type="number"
+                                              id="maxHour"
+                                              v-model.number="timeConfig.maxHour"
+                                              class="form-control form-control-sm"
+                                              min="0"
+                                              max="23"
+                                            />
+                                          </div>
+                                          <div class="col-md-3 col-6">
+                                            <label for="minMinute" class="form-label"
+                                              >Start Minute</label
+                                            >
+                                            <input
+                                              type="number"
+                                              id="minMinute"
+                                              v-model.number="timeConfig.minMinute"
+                                              class="form-control form-control-sm"
+                                              min="0"
+                                              max="59"
+                                            />
+                                          </div>
+                                          <div class="col-md-3 col-6">
+                                            <label for="maxMinute" class="form-label"
+                                              >End Minute</label
+                                            >
+                                            <input
+                                              type="number"
+                                              id="maxMinute"
+                                              v-model.number="timeConfig.maxMinute"
+                                              class="form-control form-control-sm"
+                                              min="0"
+                                              max="59"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <!-- Hidden fields -->
                                       <input
-                                        class="form-control"
-                                        type="file"
-                                        id="excelFile"
-                                        accept=".xlsx,.xls"
+                                        type="hidden"
+                                        name="datajson"
+                                        :value="JSON.stringify(excelData)"
                                       />
-                                      <small class="text-muted"
-                                        >Required columns: to, name. Optional: message,
-                                        scheduledTime</small
-                                      >
-                                    </div>
+                                      <input
+                                        type="hidden"
+                                        name="timeConfig"
+                                        :value="JSON.stringify(timeConfig)"
+                                      />
 
-                                    <div class="mb-1">
-                                      <label for="template" class="form-label"
-                                        >Message Template</label
-                                      >
-                                      <textarea
-                                        name="template"
-                                        id="template"
-                                        class="form-control"
-                                        rows="4"
-                                        placeholder="Hello {{ name }}, this is your notification..."
-                                      ></textarea>
-                                      <small class="text-muted" id="parameters-info"></small>
-                                    </div>
-
-                                    <div class="mb-1">
-                                      <label class="form-label mb-0 control-label"
-                                        >Time Settings</label
-                                      >
-                                      <div class="row g-1">
-                                        <div class="col-md-3 col-6">
-                                          <label for="minHour" class="form-label">Start Hour</label>
-                                          <input
-                                            type="number"
-                                            id="minHour"
-                                            name="timeConfig[minHour]"
-                                            class="form-control"
-                                            min="0"
-                                            max="23"
-                                            value="9"
-                                          />
+                                      <div class="mb-1">
+                                        <div
+                                          class="alert alert-info p-1 text-center"
+                                          v-if="showUploadInfo"
+                                        >
+                                          <small>{{ fileDetails }}</small>
                                         </div>
-                                        <div class="col-md-3 col-6">
-                                          <label for="maxHour" class="form-label">End Hour</label>
-                                          <input
-                                            type="number"
-                                            id="maxHour"
-                                            name="timeConfig[maxHour]"
-                                            class="form-control"
-                                            min="0"
-                                            max="23"
-                                            value="17"
-                                          />
-                                        </div>
-                                        <div class="col-md-3 col-6">
-                                          <label for="minMinute" class="form-label"
-                                            >Start Minute</label
-                                          >
-                                          <input
-                                            type="number"
-                                            id="minMinute"
-                                            name="timeConfig[minMinute]"
-                                            class="form-control"
-                                            min="0"
-                                            max="59"
-                                            value="0"
-                                          />
-                                        </div>
-                                        <div class="col-md-3 col-6">
-                                          <label for="maxMinute" class="form-label"
-                                            >End Minute</label
-                                          >
-                                          <input
-                                            type="number"
-                                            id="maxMinute"
-                                            name="timeConfig[maxMinute]"
-                                            class="form-control"
-                                            min="0"
-                                            max="59"
-                                            value="59"
-                                          />
-                                        </div>
+                                        <div
+                                          class="alert alert-danger"
+                                          v-if="errorMessage"
+                                          v-html="errorMessage"
+                                        ></div>
                                       </div>
-                                    </div>
 
-                                    <!-- Hidden field for JSON data -->
-                                    <input type="hidden" name="datajson" id="datajson" />
-
-                                    <div class="mb-1">
                                       <div
-                                        class="alert alert-info"
-                                        id="uploadInfo"
-                                        style="display: none"
+                                        class="d-flex justify-content-end align-items-center gap-2 mt-3"
                                       >
-                                        <span id="fileDetails"></span>
+                                        <button
+                                          type="submit"
+                                          class="btn btn-primary"
+                                          :disabled="isSubmitDisabled"
+                                        >
+                                          Schedule Messages
+                                        </button>
+                                        <button
+                                          type="button"
+                                          class="btn btn-secondary"
+                                          @click="resetForm"
+                                        >
+                                          Reset
+                                        </button>
                                       </div>
-                                      <div
-                                        class="alert alert-danger"
-                                        id="errorInfo"
-                                        style="display: none"
-                                      ></div>
-                                    </div>
-
-                                    <div class="mt-2">
-                                      <button
-                                        type="submit"
-                                        class="btn btn-primary"
-                                        id="submitBtn"
-                                        disabled
-                                      >
-                                        Schedule Messages
-                                      </button>
-                                      <button
-                                        type="button"
-                                        class="btn btn-secondary"
-                                        onclick="resetForm()"
-                                      >
-                                        Reset
-                                      </button>
-                                    </div>
-                                  </form>
+                                    </form>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <div class="col-md-7">
-                          <!-- Preview section -->
-                          <div class="card mb-4" id="previewCard" style="display: none">
-                            <div class="card-header">
-                              <h4>Data Preview</h4>
-                            </div>
-                            <div class="card-body">
-                              <div class="table-responsive">
-                                <table class="table table-striped" id="previewTable">
-                                  <thead>
-                                    <tr>
-                                      <th>#</th>
-                                      <th>To</th>
-                                      <th>Name</th>
-                                      <th>Message Preview</th>
-                                      <th>Scheduled Time</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody id="previewBody">
-                                    <!-- Preview rows will be inserted here -->
-                                  </tbody>
-                                </table>
+                          <div class="col-md-7">
+                            <!-- Preview Table -->
+                            <div class="mb-3" v-if="showPreview">
+                              <div class="card" id="previewCard">
+                                <div class="card-header">
+                                  <h5>Message Preview</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                  <div class="table-responsive">
+                                    <table class="table table-striped">
+                                      <thead>
+                                        <tr>
+                                          <th>#</th>
+                                          <th>Phone</th>
+                                          <th>Name</th>
+                                          <th>Message</th>
+                                          <th>Scheduled Time</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody id="previewBody">
+                                        <tr v-for="(row, index) in previewData" :key="index">
+                                          <td>{{ index + 1 }}</td>
+                                          <td>{{ row.phone }}</td>
+                                          <td>{{ row.name }}</td>
+                                          <td>{{ row.message }}</td>
+                                          <td>{{ row.scheduledTime }}</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
                               </div>
-                              <p><small>Showing up to 10 preview rows.</small></p>
                             </div>
-                          </div>
-                          <div class="card">
-                            <div
-                              class="card-header d-flex justify-content-between align-items-center"
-                            >
-                              <h5 class="card-title m-0">Scheduled Messages</h5>
-                              <button
-                                class="btn btn-sm btn-outline-secondary"
-                                id="refresh-scheduled"
-                              >
-                                <i class="bi bi-arrow-repeat"></i> Refresh
-                              </button>
-                            </div>
-                            <div class="card-body">
-                              <table class="table table-striped">
-                                <thead>
-                                  <tr>
-                                    <th scope="col">Recipient</th>
-                                    <th scope="col">Message</th>
-                                    <th scope="col">Scheduled Time</th>
-                                    <th scope="col">Actions</th>
-                                  </tr>
-                                </thead>
-                                <tbody id="scheduled-messages">
-                                  <!-- Dinamis: Isi list pesan terjadwal -->
-                                </tbody>
-                              </table>
+                            <div class="card">
+                              <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                  <h5 class="mb-0">Schedule Messages</h5>
+                                  <button
+                                    class="btn btn-sm btn-outline-secondary"
+                                    @click="loadScheduledMessages"
+                                  >
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                                  </button>
+                                </div>
+                              </div>
+                              <div class="card-body p-0">
+                                <div class="table-responsive">
+                                  <table class="table table-striped">
+                                    <thead>
+                                      <tr>
+                                        <th>To</th>
+                                        <th>Message</th>
+                                        <th>Time</th>
+                                        <th>Actions</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody id="scheduled-messages">
+                                      <tr v-if="scheduledMessages.length === 0">
+                                        <td colspan="4" class="text-center">
+                                          No scheduled messages.
+                                        </td>
+                                      </tr>
+                                      <tr v-for="msg in scheduledMessages" :key="msg.id">
+                                        <td>{{ msg.to.replace("@s.whatsapp.net", "") }}</td>
+                                        <td>{{ msg.message }}</td>
+                                        <td>{{ formatDateTime(msg.scheduledTime) }}</td>
+                                        <td>
+                                          <button
+                                            class="btn btn-sm btn-warning me-2"
+                                            @click="editScheduledMessage(msg.id)"
+                                          >
+                                            <i class="bi bi-pencil"></i>
+                                          </button>
+                                          <button
+                                            class="btn btn-sm btn-danger"
+                                            @click="deleteScheduledMessage(msg.id)"
+                                          >
+                                            <i class="bi bi-trash"></i>
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                      <script>
-                        // Load XLSX from CDN if not already included
-                        if (typeof XLSX === "undefined") {
-                          const script = document.createElement("script");
-                          script.src =
-                            "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-                          document.head.appendChild(script);
-                        }
-
-                        let excelData = [];
-
-                        function excelToJson(file) {
-                          return new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.readAsBinaryString(file);
-
-                            reader.onload = (event) => {
-                              try {
-                                const data = event.target.result;
-                                const workbook = XLSX.read(data, { type: "binary" });
-                                const sheetName = workbook.SheetNames[0];
-                                const sheet = workbook.Sheets[sheetName];
-                                const json = XLSX.utils.sheet_to_json(sheet);
-
-                                resolve(json);
-                              } catch (error) {
-                                reject(error);
-                              }
-                            };
-
-                            reader.onerror = (error) => reject(error);
-                          });
-                        }
-
-                        function validateExcelData(data) {
-                          if (!Array.isArray(data) || data.length === 0) {
-                            return {
-                              isValid: false,
-                              errors: ["Excel file is empty or has no valid data"],
-                            };
-                          }
-
-                          const firstRow = data[0];
-                          const errors = [];
-
-                          // Check required columns
-                          const hasToColumn =
-                            "to" in firstRow ||
-                            "phone" in firstRow ||
-                            "number" in firstRow ||
-                            "no" in firstRow;
-                          const hasNameColumn = "name" in firstRow || "nama" in firstRow;
-
-                          if (!hasToColumn) {
-                            errors.push(
-                              "Missing required 'to' column (alternatives: 'phone', 'number', 'no')"
-                            );
-                          }
-
-                          if (!hasNameColumn) {
-                            errors.push("Missing required 'name' column (alternative: 'nama')");
-                          }
-
-                          return {
-                            isValid: errors.length === 0,
-                            errors: errors,
-                          };
-                        }
-
-                        function renderTemplate(template, data) {
-                          return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
-                            return data[key] !== undefined ? data[key] : match;
-                          });
-                        }
-
-                        function getRandomTime(
-                          minHour = 0,
-                          maxHour = 23,
-                          minMinute = 0,
-                          maxMinute = 59,
-                          minSecond = 0,
-                          maxSecond = 59,
-                          minFutureMinutes = 3
-                        ) {
-                          // Get current time
-                          const now = new Date();
-
-                          // Calculate minimum allowed time (current time + minFutureMinutes minutes)
-                          const minTime = new Date(now.getTime() + minFutureMinutes * 60000);
-
-                          // Extract minimum required hours, minutes, seconds from minTime
-                          const minTimeHour = minTime.getHours();
-                          const minTimeMinute = minTime.getMinutes();
-                          const minTimeSecond = minTime.getSeconds();
-
-                          // Validate input ranges
-                          minHour = Math.max(0, Math.min(23, minHour));
-                          maxHour = Math.max(0, Math.min(23, maxHour));
-                          minMinute = Math.max(0, Math.min(59, minMinute));
-                          maxMinute = Math.max(0, Math.min(59, maxMinute));
-                          minSecond = Math.max(0, Math.min(59, minSecond));
-                          maxSecond = Math.max(0, Math.min(59, maxSecond));
-
-                          // Ensure min is not greater than max
-                          if (minHour > maxHour) [minHour, maxHour] = [maxHour, minHour];
-                          if (minMinute > maxMinute)
-                            [minMinute, maxMinute] = [maxMinute, minMinute];
-                          if (minSecond > maxSecond)
-                            [minSecond, maxSecond] = [maxSecond, minSecond];
-
-                          // Adjust min values to ensure we're not below the current time + offset
-                          if (minTimeHour > minHour) {
-                            minHour = minTimeHour;
-                          } else if (minTimeHour === minHour) {
-                            if (minTimeMinute > minMinute) {
-                              minMinute = minTimeMinute;
-                            } else if (minTimeMinute === minMinute) {
-                              if (minTimeSecond > minSecond) {
-                                minSecond = minTimeSecond;
-                              }
-                            }
-                          }
-
-                          // If min values are now greater than max values, adjust max values
-                          if (minHour > maxHour) {
-                            // Can't satisfy both constraints, so prioritize the future time requirement
-                            maxHour = Math.min(23, minHour);
-                          }
-                          if (minHour === maxHour && minMinute > maxMinute) {
-                            maxMinute = Math.min(59, minMinute);
-                          }
-                          if (
-                            minHour === maxHour &&
-                            minMinute === maxMinute &&
-                            minSecond > maxSecond
-                          ) {
-                            maxSecond = Math.min(59, minSecond);
-                          }
-
-                          // Generate random components within the adjusted ranges
-                          const hours = String(
-                            Math.floor(minHour + Math.random() * (maxHour - minHour + 1))
-                          ).padStart(2, "0");
-
-                          // Handle minutes based on hour selection
-                          let minutes;
-                          if (parseInt(hours) === minHour) {
-                            minutes = String(
-                              Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
-                            ).padStart(2, "0");
-                          } else {
-                            minutes = String(
-                              Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
-                            ).padStart(2, "0");
-                          }
-
-                          // Handle seconds based on hour and minute selection
-                          let seconds;
-                          if (parseInt(hours) === minHour && parseInt(minutes) === minMinute) {
-                            seconds = String(
-                              Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
-                            ).padStart(2, "0");
-                          } else {
-                            seconds = String(
-                              Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
-                            ).padStart(2, "0");
-                          }
-
-                          return `${hours}:${minutes}:${seconds}`;
-                        }
-
-                        function updatePreview() {
-                          if (excelData.length === 0) return;
-
-                          const previewCard = document.getElementById("previewCard");
-                          const previewBody = document.getElementById("previewBody");
-                          const template = document.getElementById("template").value;
-
-                          // Clear previous preview
-                          previewBody.innerHTML = "";
-
-                          // Get time settings
-                          const minHour = parseInt(document.getElementById("minHour").value) || 9;
-                          const maxHour = parseInt(document.getElementById("maxHour").value) || 17;
-                          const minMinute =
-                            parseInt(document.getElementById("minMinute").value) || 0;
-                          const maxMinute =
-                            parseInt(document.getElementById("maxMinute").value) || 59;
-
-                          // Show preview of up to 10 rows
-                          const previewLimit = Math.min(10, excelData.length);
-                          for (let i = 0; i < previewLimit; i++) {
-                            const row = excelData[i];
-
-                            // Get phone number from appropriate field
-                            const phone = row.to || row.phone || row.number || row.no || "";
-
-                            // Get name from appropriate field
-                            const name = row.name || row.nama || "";
-
-                            // Generate message preview
-                            const messagePreview = renderTemplate(template, row);
-
-                            // Create a sample scheduled time
-                            const now = new Date();
-                            const scheduledDate = `${now.getFullYear()}-${String(
-                              now.getMonth() + 1
-                            ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-                            const scheduledTime = `${scheduledDate} ${getRandomTime(
-                              minHour,
-                              maxHour,
-                              minMinute,
-                              maxMinute
-                            )}`;
-
-                            // Create table row
-                            const tr = document.createElement("tr");
-                            tr.innerHTML = `
-                              <td>${i + 1}</td>
-                              <td>${phone}</td>
-                              <td>${name}</td>
-                              <td>${messagePreview}</td>
-                              <td>${scheduledTime}</td>
-                            `;
-                            previewBody.appendChild(tr);
-                          }
-
-                          // Show preview card
-                          previewCard.style.display = "block";
-                        }
-
-                        function resetForm() {
-                          document.getElementById("bulkMessageForm").reset();
-                          document.getElementById("datajson").value = "";
-                          document.getElementById("uploadInfo").style.display = "none";
-                          document.getElementById("errorInfo").style.display = "none";
-                          document.getElementById("previewCard").style.display = "none";
-                          document.getElementById("submitBtn").disabled = true;
-                          excelData = [];
-                        }
-
-                        document.addEventListener("DOMContentLoaded", function () {
-                          const form = document.getElementById("bulkMessageForm");
-                          const submitBtn = document.getElementById("submitBtn");
-                          const errorInfo = document.getElementById("errorInfo");
-                          const uploadInfo = document.getElementById("uploadInfo");
-                          const templateField = document.getElementById("template");
-
-                          // Handle file upload
-                          document
-                            .getElementById("excelFile")
-                            .addEventListener("change", async (event) => {
-                              const file = event.target.files[0];
-                              if (!file) return;
-
-                              try {
-                                excelData = await excelToJson(file);
-                                const validation = validateExcelData(excelData);
-
-                                if (validation.isValid) {
-                                  // show paramaters from data
-                                  // Get all unique keys from all objects
-                                  const allKeys = [
-                                    ...new Set(excelData.flatMap((obj) => Object.keys(obj))),
-                                  ];
-
-                                  // Format as requested
-                                  const formattedOutput = `Use ${allKeys
-                                    .map((key) => `{{ ${key} }}`)
-                                    .join(", ")} to insert data from Excel.
-                                        Example: Hello {{ name }}`;
-                                  document.getElementById("parameters-info").textContent =
-                                    formattedOutput;
-
-                                  document.getElementById("datajson").value =
-                                    JSON.stringify(excelData);
-                                  document.getElementById(
-                                    "fileDetails"
-                                  ).textContent = `Loaded ${excelData.length} records from "${file.name}"`;
-                                  uploadInfo.style.display = "block";
-                                  errorInfo.style.display = "none";
-                                  submitBtn.disabled = !templateField.value.trim();
-
-                                  // Update preview if template exists
-                                  if (templateField.value.trim()) {
-                                    updatePreview();
-                                  }
-                                } else {
-                                  errorInfo.innerHTML = `<strong>Excel validation failed:</strong><ul>${validation.errors
-                                    .map((err) => `<li>${err}</li>`)
-                                    .join("")}</ul>`;
-                                  errorInfo.style.display = "block";
-                                  uploadInfo.style.display = "none";
-                                  submitBtn.disabled = true;
-                                }
-                              } catch (error) {
-                                console.error("Error processing Excel file:", error);
-                                errorInfo.textContent = `Error processing Excel file: ${error.message}`;
-                                errorInfo.style.display = "block";
-                                uploadInfo.style.display = "none";
-                                submitBtn.disabled = true;
-                              }
-                            });
-
-                          // Enable/disable submit button based on template content
-                          templateField.addEventListener("input", function () {
-                            submitBtn.disabled = !this.value.trim() || excelData.length === 0;
-
-                            // Update preview if data is loaded
-                            if (excelData.length > 0 && this.value.trim()) {
-                              updatePreview();
-                            }
-                          });
-
-                          // Update preview when time settings change
-                          document
-                            .getElementById("minHour")
-                            .addEventListener("change", updatePreview);
-                          document
-                            .getElementById("maxHour")
-                            .addEventListener("change", updatePreview);
-                          document
-                            .getElementById("minMinute")
-                            .addEventListener("change", updatePreview);
-                          document
-                            .getElementById("maxMinute")
-                            .addEventListener("change", updatePreview);
-
-                          // Handle form submission
-                          form.addEventListener("submit", function (e) {
-                            if (!templateField.value.trim() || excelData.length === 0) {
-                              e.preventDefault();
-                              errorInfo.textContent =
-                                "Please provide both an Excel file and a message template.";
-                              errorInfo.style.display = "block";
-                              return false;
-                            }
-
-                            // Add time config to the form
-                            const timeConfig = {
-                              minHour: document.getElementById("minHour").value,
-                              maxHour: document.getElementById("maxHour").value,
-                              minMinute: document.getElementById("minMinute").value,
-                              maxMinute: document.getElementById("maxMinute").value,
-                            };
-
-                            // Convert time config to JSON string and add to form data
-                            const timeConfigInput = document.createElement("input");
-                            timeConfigInput.type = "hidden";
-                            timeConfigInput.name = "timeConfig";
-                            timeConfigInput.value = JSON.stringify(timeConfig);
-                            form.appendChild(timeConfigInput);
-                          });
-                        });
-                      </script>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Logs Tab -->
-            <div class="tab-pane fade" id="logs" role="tabpanel">
-              <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                  <h5 class="card-title m-0">Activity Logs</h5>
-                  <button class="btn btn-sm btn-outline-secondary" id="clear-logs">
-                    <i class="bi bi-trash"></i> Clear Logs
-                  </button>
-                </div>
-                <div class="card-body">
-                  <div class="message-log d-flex flex-column" id="message-log">
-                    <div class="text-center py-4 text-muted">
-                      <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
-                      <p class="mt-2">No activity yet. Send a message to see logs.</p>
+              <!-- Logs Tab -->
+              <div class="tab-pane fade" id="logs" role="tabpanel">
+                <div class="card">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title m-0">Activity Logs</h5>
+                    <button class="btn btn-sm btn-outline-secondary" id="clear-logs">
+                      <i class="bi bi-trash"></i> Clear Logs
+                    </button>
+                  </div>
+                  <div class="card-body">
+                    <div class="message-log d-flex flex-column" id="message-log">
+                      <div class="text-center py-4 text-muted">
+                        <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
+                        <p class="mt-2">No activity yet. Send a message to see logs.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Settings Tab -->
-            <div class="tab-pane fade" id="settings" role="tabpanel">
-              <div class="card">
-                <div class="card-header">
-                  <h5 class="card-title m-0">Session Settings</h5>
-                </div>
-                <div class="card-body">
-                  <div
-                    class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"
-                  >
-                    <div>
-                      <h6 class="m-0">Logout Session</h6>
-                      <p class="text-muted m-0">
-                        Disconnect this WhatsApp session but keep its data
-                      </p>
-                    </div>
-                    <button class="btn btn-warning" id="logout-btn">
-                      <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
+              <!-- Settings Tab -->
+              <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="card-title m-0">Session Settings</h5>
                   </div>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h6 class="m-0">Delete Session</h6>
-                      <p class="text-muted m-0">Remove this session and all its data permanently</p>
+                  <div class="card-body">
+                    <div
+                      class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"
+                    >
+                      <div>
+                        <h6 class="m-0">Logout Session</h6>
+                        <p class="text-muted m-0">
+                          Disconnect this WhatsApp session but keep its data
+                        </p>
+                      </div>
+                      <button class="btn btn-warning" id="logout-btn">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                      </button>
                     </div>
-                    <button class="btn btn-danger" id="delete-btn">
-                      <i class="bi bi-trash"></i> Delete
-                    </button>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <h6 class="m-0">Delete Session</h6>
+                        <p class="text-muted m-0">
+                          Remove this session and all its data permanently
+                        </p>
+                      </div>
+                      <button class="btn btn-danger" id="delete-btn">
+                        <i class="bi bi-trash"></i> Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1269,48 +1017,59 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Message Status Modal -->
-    <div class="modal fade" id="statusModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="statusTitle">Message Status</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body" id="statusMessage"></div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+      <!-- Status Modal -->
+      <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="statusTitle">{{ statusTitle }}</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p id="statusMessage">{{ statusMessage }}</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Delete Session</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <p>Are you sure you want to delete this session? This action cannot be undone.</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" id="confirm-delete">Delete</button>
+      <!-- Delete Confirmation Modal -->
+      <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirm Deletion</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete this session?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                id="confirm-delete"
+                @click="deleteSession"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1318,632 +1077,936 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-      const sessionId = "<%= sessionId %>";
-      const socket = io();
-      const statusModal = new bootstrap.Modal(document.getElementById("statusModal"));
-      const deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+      const { createApp, ref, onMounted, computed, watch } = Vue;
 
-      // Load session info
-      async function loadSessionInfo() {
-        try {
-          const response = await fetch("/api/sessions");
-          const data = await response.json();
+      const app = createApp({
+        setup() {
+          // Constants and References
+          const sessionId = "<%= sessionId %>";
+          const socket = io();
+          let statusModal = null;
+          let deleteModal = null;
 
-          if (data.success) {
-            const session = data.data.find((s) => s.id === sessionId);
-            if (session) {
-              const status = session.connected ? "Online" : "Offline";
-              const statusClass = session.connected ? "online" : "offline";
-              document.getElementById(
-                "session-status"
-              ).innerHTML = `<span class="online-indicator ${statusClass}"></span> ${status}`;
-            } else {
-              document.getElementById("session-status").textContent = "Session not found";
-            }
-          }
-        } catch (error) {
-          console.error("Error loading session info:", error);
-        }
-      }
+          // State variables
+          const sessionConnected = ref(false);
+          const qrCode = ref("");
+          const statusTitle = ref("");
+          const statusMessage = ref("");
+          const messageLogs = ref([]);
+          const scheduledMessages = ref([]);
 
-      // Load Scheduled Messages
-      const loadScheduledMessages = async () => {
-        try {
-          const response = await fetch(`/api/schedule-messages/${sessionId}`);
-          const data = await response.json();
-          if (data.success) {
-            const messages = data.data;
-            const tbody = document.getElementById("scheduled-messages");
-            tbody.innerHTML = "";
-            if (messages.length === 0) {
-              tbody.innerHTML =
-                '<tr><td colspan="4" class="text-center">No scheduled messages.</td></tr>';
-              return;
-            }
-            messages.forEach((msg) => {
-              const tr = document.createElement("tr");
-              tr.innerHTML = `
-                  <td>${msg.to.replace("@s.whatsapp.net", "")}</td>
-                  <td>${msg.message}</td>
-                  <td>${new Date(msg.scheduledTime).toLocaleString()}</td>
-                  <td>
-                    <button class="btn btn-sm btn-warning me-2 edit-schedule" data-id="${
-                      msg.id
-                    }"><i class="bi bi-pencil"></i> </button>
-                    <button class="btn btn-sm btn-danger delete-schedule" data-id="${
-                      msg.id
-                    }"><i class="bi bi-trash"></i> </button>
-                  </td>
-                `;
-              tbody.appendChild(tr);
-            });
+          // Form data
+          const messageForm = ref({
+            phone: "",
+            message: "",
+          });
 
-            // Add event listeners for edit and delete buttons
-            document.querySelectorAll(".edit-schedule").forEach((btn) => {
-              btn.addEventListener("click", (e) => {
-                const messageId = e.target.closest("button").dataset.id;
-                // Implement edit functionality
-                // You can show a modal with a form to edit the scheduled message
-                // and handle the form submission similar to scheduling a new message
-                showEditModal(messageId);
-              });
-            });
+          const mediaForm = ref({
+            phone: "",
+            mediaType: "image",
+            caption: "",
+            mediaUrl: "",
+            mediaFile: null,
+          });
 
-            document.querySelectorAll(".delete-schedule").forEach((btn) => {
-              btn.addEventListener("click", async (e) => {
-                const messageId = e.target.closest("button").dataset.id;
+          const scheduleForm = ref({
+            phone: "",
+            message: "",
+            scheduledTime: "",
+            isRecurring: false,
+            recurringType: "daily",
+            selectedDays: {
+              monday: false,
+              tuesday: false,
+              wednesday: false,
+              thursday: false,
+              friday: false,
+              saturday: false,
+              sunday: false,
+            },
+            endDate: "",
+          });
+
+          // Media preview
+          const showMediaPreview = ref(false);
+          const mediaPreviewContent = ref("");
+          const mediaFileInfo = ref({
+            name: "",
+            size: "",
+            type: "",
+          });
+
+          const daysList = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+          ];
+
+          const excelData = ref([]);
+          const template = ref("");
+          const timeConfig = ref({
+            minHour: 9,
+            maxHour: 17,
+            minMinute: 0,
+            maxMinute: 59,
+          });
+          const showUploadInfo = ref(false);
+          const fileDetails = ref("");
+          const errorMessage = ref("");
+          const parametersInfo = ref("");
+          const previewData = ref([]);
+
+          // Computed properties
+          const isSubmitDisabled = computed(() => {
+            return !template.value.trim() || excelData.value.length === 0;
+          });
+
+          const showPreview = computed(() => {
+            return excelData.value.length > 0 && template.value.trim() !== "";
+          });
+
+          // Methods
+          function excelToJson(file) {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.readAsBinaryString(file);
+
+              reader.onload = (event) => {
                 try {
-                  const response = await fetch(`/api/schedule-message/${sessionId}/${messageId}`, {
-                    method: "DELETE",
-                  });
-                  const result = await response.json();
-                  if (result.success) {
-                    showStatusModal("Success", "Scheduled message deleted successfully.");
-                    loadScheduledMessages();
-                  } else {
-                    throw new Error(result.error);
-                  }
+                  const data = event.target.result;
+                  const workbook = XLSX.read(data, { type: "binary" });
+                  const sheetName = workbook.SheetNames[0];
+                  const sheet = workbook.Sheets[sheetName];
+                  const json = XLSX.utils.sheet_to_json(sheet);
+
+                  resolve(json);
                 } catch (error) {
-                  showStatusModal("Error", error.message);
+                  reject(error);
                 }
-              });
+              };
+
+              reader.onerror = (error) => reject(error);
             });
-          } else {
-            throw new Error(data.error);
           }
-        } catch (error) {
-          showStatusModal("Error", error.message);
-        }
-      };
 
-      // Show Status Modal
-      const showStatusModal = (title, message) => {
-        document.getElementById("statusTitle").textContent = title;
-        document.getElementById("statusMessage").textContent = message;
-        statusModal.show();
-      };
+          function validateExcelData(data) {
+            if (!Array.isArray(data) || data.length === 0) {
+              return {
+                isValid: false,
+                errors: ["Excel file is empty or has no valid data"],
+              };
+            }
 
-      // Edit Scheduled Message (Implementation Example)
-      const showEditModal = async (messageId) => {
-        try {
-          // Fetch the specific scheduled message details
-          const response = await fetch(`/api/schedule-messages/${sessionId}`);
-          const data = await response.json();
-          if (data.success) {
-            const message = data.data.find((msg) => msg.id === messageId);
-            if (message) {
-              // Populate the form with existing data
-              // Create and show a modal with a form to edit the message
-              // For simplicity, using a prompt (replace with a proper modal as needed)
-              const newTo = prompt(
-                "Enter new phone number:",
-                message.to.replace("@s.whatsapp.net", "")
-              );
-              if (newTo === null) return; // Cancelled
-              const newMessage = prompt("Enter new message:", message.message);
-              if (newMessage === null) return; // Cancelled
-              const newScheduledTime = prompt(
-                "Enter new scheduled time (YYYY-MM-DDTHH:MM):",
-                message.scheduledTime.slice(0, 16)
-              );
-              if (newScheduledTime === null) return; // Cancelled
+            const firstRow = data[0];
+            const errors = [];
 
-              // Send update request
-              const updateResponse = await fetch(
-                `/api/schedule-message/${sessionId}/${messageId}`,
-                {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    to: newTo,
-                    message: newMessage,
-                    scheduledTime: newScheduledTime,
-                  }),
+            // Check required columns
+            const hasToColumn =
+              "to" in firstRow || "phone" in firstRow || "number" in firstRow || "no" in firstRow;
+            const hasNameColumn = "name" in firstRow || "nama" in firstRow;
+
+            if (!hasToColumn) {
+              errors.push("Missing required 'to' column (alternatives: 'phone', 'number', 'no')");
+            }
+
+            if (!hasNameColumn) {
+              errors.push("Missing required 'name' column (alternative: 'nama')");
+            }
+
+            return {
+              isValid: errors.length === 0,
+              errors: errors,
+            };
+          }
+
+          function renderTemplate(templateText, data) {
+            return templateText.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
+              return data[key] !== undefined ? data[key] : match;
+            });
+          }
+
+          function getRandomTime(
+            minHour = 0,
+            maxHour = 23,
+            minMinute = 0,
+            maxMinute = 59,
+            minSecond = 0,
+            maxSecond = 59,
+            minFutureMinutes = 3
+          ) {
+            // Get current time
+            const now = new Date();
+
+            // Calculate minimum allowed time (current time + minFutureMinutes minutes)
+            const minTime = new Date(now.getTime() + minFutureMinutes * 60000);
+
+            // Extract minimum required hours, minutes, seconds from minTime
+            const minTimeHour = minTime.getHours();
+            const minTimeMinute = minTime.getMinutes();
+            const minTimeSecond = minTime.getSeconds();
+
+            // Validate input ranges
+            minHour = Math.max(0, Math.min(23, minHour));
+            maxHour = Math.max(0, Math.min(23, maxHour));
+            minMinute = Math.max(0, Math.min(59, minMinute));
+            maxMinute = Math.max(0, Math.min(59, maxMinute));
+            minSecond = Math.max(0, Math.min(59, minSecond));
+            maxSecond = Math.max(0, Math.min(59, maxSecond));
+
+            // Ensure min is not greater than max
+            if (minHour > maxHour) [minHour, maxHour] = [maxHour, minHour];
+            if (minMinute > maxMinute) [minMinute, maxMinute] = [maxMinute, minMinute];
+            if (minSecond > maxSecond) [minSecond, maxSecond] = [maxSecond, minSecond];
+
+            // Adjust min values to ensure we're not below the current time + offset
+            if (minTimeHour > minHour) {
+              minHour = minTimeHour;
+            } else if (minTimeHour === minHour) {
+              if (minTimeMinute > minMinute) {
+                minMinute = minTimeMinute;
+              } else if (minTimeMinute === minMinute) {
+                if (minTimeSecond > minSecond) {
+                  minSecond = minTimeSecond;
                 }
-              );
-              const updateResult = await updateResponse.json();
-              if (updateResult.success) {
-                showStatusModal("Success", "Scheduled message updated successfully.");
-                loadScheduledMessages();
+              }
+            }
+
+            // If min values are now greater than max values, adjust max values
+            if (minHour > maxHour) {
+              // Can't satisfy both constraints, so prioritize the future time requirement
+              maxHour = Math.min(23, minHour);
+            }
+            if (minHour === maxHour && minMinute > maxMinute) {
+              maxMinute = Math.min(59, minMinute);
+            }
+            if (minHour === maxHour && minMinute === maxMinute && minSecond > maxSecond) {
+              maxSecond = Math.min(59, minSecond);
+            }
+
+            // Generate random components within the adjusted ranges
+            const hours = String(
+              Math.floor(minHour + Math.random() * (maxHour - minHour + 1))
+            ).padStart(2, "0");
+
+            // Handle minutes based on hour selection
+            let minutes;
+            if (parseInt(hours) === minHour) {
+              minutes = String(
+                Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
+              ).padStart(2, "0");
+            } else {
+              minutes = String(
+                Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
+              ).padStart(2, "0");
+            }
+
+            // Handle seconds based on hour and minute selection
+            let seconds;
+            if (parseInt(hours) === minHour && parseInt(minutes) === minMinute) {
+              seconds = String(
+                Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
+              ).padStart(2, "0");
+            } else {
+              seconds = String(
+                Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
+              ).padStart(2, "0");
+            }
+
+            return `${hours}:${minutes}:${seconds}`;
+          }
+
+          function updatePreview() {
+            if (excelData.value.length === 0) return;
+
+            const data = [];
+            const previewLimit = Math.min(10, excelData.value.length);
+
+            // Get time settings
+            const minHour = timeConfig.value.minHour;
+            const maxHour = timeConfig.value.maxHour;
+            const minMinute = timeConfig.value.minMinute;
+            const maxMinute = timeConfig.value.maxMinute;
+
+            for (let i = 0; i < previewLimit; i++) {
+              const row = excelData.value[i];
+              const processedRow = {};
+
+              // Process the phone number field (accept various column names)
+              if (row.to) processedRow.phone = row.to;
+              else if (row.phone) processedRow.phone = row.phone;
+              else if (row.number) processedRow.phone = row.number;
+              else if (row.no) processedRow.phone = row.no;
+
+              // Process the name field
+              if (row.name) processedRow.name = row.name;
+              else if (row.nama) processedRow.name = row.nama;
+
+              // Process message template
+              if (row.message) {
+                processedRow.message = row.message;
               } else {
-                throw new Error(updateResult.error);
+                processedRow.message = renderTemplate(template.value, row);
               }
-            } else {
-              throw new Error("Scheduled message not found");
+
+              // Process scheduled time
+              if (row.scheduledTime) {
+                processedRow.scheduledTime = row.scheduledTime;
+              } else {
+                // Generate random time within configured hours
+                processedRow.scheduledTime = getRandomTime(minHour, maxHour, minMinute, maxMinute);
+              }
+
+              data.push(processedRow);
             }
-          } else {
-            throw new Error(data.error);
+
+            previewData.value = data;
           }
-        } catch (error) {
-          showStatusModal("Error", error.message);
-        }
-      };
 
-      // Listen for real-time updates
-      socket.on(`qr.${sessionId}`, (data) => {
-        // Display QR code on UI if needed
-        console.log(`QR Code for ${data.sessionId}: ${data.qrCode}`);
-        document.getElementById("qrCode").src = data.qrCode;
-      });
-
-      socket.on(`session.${sessionId}.connected`, (data) => {
-        const status = data.connected ? "Online" : "Offline";
-        const statusClass = data.connected ? "online" : "offline";
-        document.getElementById(
-          "session-status"
-        ).innerHTML = `<span class="online-indicator ${statusClass}"></span> ${status}`;
-      });
-
-      socket.on("session.update", (data) => {
-        if (data.action === "remove" && data.sessionId === sessionId) {
-          alert("Session has been removed.");
-          window.location.href = "/";
-        } else if (data.action === "update" && data.session.id === sessionId) {
-          // Update session info if needed
-        }
-      });
-
-      // Document ready
-      document.addEventListener("DOMContentLoaded", function () {
-        loadSessionInfo();
-        loadScheduledMessages();
-
-        document.getElementById("message-form").addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const phone = document.getElementById("phone").value;
-          const message = document.getElementById("message").value;
-
-          // Update preview
-          document.getElementById("preview-to").textContent = phone;
-          document.getElementById("preview-content").innerHTML = `<p>${message}</p>`;
-
-          // Send message
-          try {
-            const response = await fetch(`/api/send-message/${sessionId}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ to: phone, message }),
-            });
-            const result = await response.json();
-            if (result.success) {
-              document.getElementById("statusTitle").textContent = "Success";
-              document.getElementById("statusMessage").textContent = "Message sent successfully.";
-            } else {
-              throw new Error(result.error);
-            }
-          } catch (error) {
-            document.getElementById("statusTitle").textContent = "Error";
-            document.getElementById("statusMessage").textContent = error.message;
+          function resetForm() {
+            excelData.value = [];
+            template.value = "";
+            showUploadInfo.value = false;
+            fileDetails.value = "";
+            errorMessage.value = "";
+            previewData.value = [];
+            document.getElementById("excelFile").value = "";
           }
-          statusModal.show();
-        });
-        document.getElementById("media-form").addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const phone = document.getElementById("media-phone").value;
-          const mediaType = document.getElementById("media-type").value;
-          const caption = document.getElementById("media-caption").value;
-          const mediaFile = document.getElementById("media-file").files[0]; // New file input element
-          const mediaUrl = document.getElementById("media-url").value;
 
-          try {
-            let response;
+          async function submitForm() {
+            if (isSubmitDisabled.value) return;
 
-            // Check if a file is selected
-            if (mediaFile) {
-              // Use FormData for file upload
-              const formData = new FormData();
-              formData.append("to", phone);
-              formData.append("caption", caption);
-              formData.append("media", mediaFile);
+            try {
+              console.log("excelData.value", excelData.value);
+              // Process all records
+              const processedData = excelData.value.map((row) => {
+                const processedRow = {};
 
-              response = await fetch(`/api/send-media/${sessionId}`, {
-                method: "POST",
-                body: formData,
-                // Don't set Content-Type header when using FormData
-                // Browser will set it automatically with correct boundary
+                // Process the phone number field (accept various column names)
+                if (row.to) processedRow.to = row.to;
+                else if (row.phone) processedRow.to = row.phone;
+                else if (row.number) processedRow.to = row.number;
+                else if (row.no) processedRow.to = row.no;
+
+                // Process the name field
+                if (row.name) processedRow.name = row.name;
+                else if (row.nama) processedRow.name = row.nama;
+
+                // Process message template
+                if (row.message) {
+                  processedRow.message = row.message;
+                } else {
+                  processedRow.message = renderTemplate(template.value, row);
+                }
+
+                // Process scheduled time
+                if (row.scheduledTime) {
+                  processedRow.scheduledTime = row.scheduledTime;
+                } else {
+                  // Generate random time within configured hours
+                  processedRow.scheduledTime = getRandomTime(
+                    timeConfig.value.minHour,
+                    timeConfig.value.maxHour,
+                    timeConfig.value.minMinute,
+                    timeConfig.value.maxMinute
+                  );
+                }
+
+                return processedRow;
               });
-            } else {
-              // Use JSON for URL-based media
-              if (!mediaUrl || !mediaType) {
-                throw new Error("Please provide either a file or a media URL with type");
-              }
 
-              response = await fetch(`/api/send-media/${sessionId}`, {
+              console.log("processedData", processedData);
+
+              const payload = {
+                datajson: JSON.stringify(processedData),
+                timeConfig: JSON.stringify(timeConfig.value),
+                template: template.value,
+              };
+
+              // Submit the form (you would normally use fetch or axios here)
+              const response = await fetch(`/session/${sessionId}/bulk-message`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ to: phone, mediaUrl, mediaType, caption }),
+                body: JSON.stringify(payload),
               });
-            }
 
-            const result = await response.json();
-            if (result.success) {
-              document.getElementById("statusTitle").textContent = "Success";
-              document.getElementById("statusMessage").textContent = "Media sent successfully.";
-            } else {
-              throw new Error(result.error);
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
+              const result = await response.json();
+
+              // Handle success response
+              alert(`Successfully scheduled ${processedData.length} messages!`);
+              resetForm();
+            } catch (error) {
+              console.error("Error submitting form:", error);
+              errorMessage.value = `Error submitting form: ${error.message}`;
             }
-          } catch (error) {
-            document.getElementById("statusTitle").textContent = "Error";
-            document.getElementById("statusMessage").textContent = error.message;
           }
-          statusModal.show();
-        });
 
-        socket.on(`${sessionId}.message`, (message) => {
-          const logContainer = document.getElementById("message-log");
-          logContainer.innerHTML = ""; // Clear initial placeholder
-
-          message.messages.forEach((msg) => {
-            const div = document.createElement("div");
-            div.classList.add("message");
-            div.classList.add(msg.key.fromMe ? "message-sent" : "message-received");
-            div.textContent = msg.message.conversation || "No message content";
-            logContainer.prepend(div);
+          // Watch for changes to template to update preview
+          watch(template, () => {
+            if (excelData.value.length > 0) {
+              updatePreview();
+            }
           });
-        });
 
-        document.getElementById("clear-logs").addEventListener("click", () => {
-          document.getElementById("message-log").innerHTML = `
-          <div class="text-center py-4 text-muted">
-              <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
-              <p class="mt-2">No activity yet. Send a message to see logs.</p>
-          </div>
-      `;
-        });
-        document.getElementById("logout-btn").addEventListener("click", async () => {
-          try {
-            const response = await fetch(`/api/sessions/${sessionId}/logout`, {
-              method: "POST",
-            });
-            const result = await response.json();
-            if (result.success) {
-              document.getElementById("statusTitle").textContent = "Success";
-              document.getElementById("statusMessage").textContent =
-                "Session logged out successfully.";
-            } else {
-              throw new Error(result.error);
+          // Watch for changes to time config to update preview
+          watch(
+            timeConfig,
+            () => {
+              if (excelData.value.length > 0 && previewData.value.length > 0) {
+                updatePreview();
+              }
+            },
+            { deep: true }
+          );
+
+          async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+              const data = await excelToJson(file);
+              const validation = validateExcelData(data);
+
+              if (validation.isValid) {
+                excelData.value = data;
+
+                // Get all unique keys from all objects
+                const allKeys = [...new Set(data.flatMap((obj) => Object.keys(obj)))];
+
+                // Format parameters info
+                parametersInfo.value = `Use ${allKeys
+                  .map((key) => `{{ ${key} }}`)
+                  .join(", ")} in message template.`;
+
+                fileDetails.value = `Loaded ${data.length} records from "${file.name}"`;
+                showUploadInfo.value = true;
+                errorMessage.value = "";
+
+                // Update preview if template exists
+                if (template.value.trim()) {
+                  updatePreview();
+                }
+              } else {
+                errorMessage.value = `<strong>Excel validation failed:</strong><ul>${validation.errors
+                  .map((err) => `<li>${err}</li>`)
+                  .join("")}</ul>`;
+                showUploadInfo.value = false;
+              }
+            } catch (error) {
+              console.error("Error processing Excel file:", error);
+              errorMessage.value = `Error processing Excel file: ${error.message}`;
+              showUploadInfo.value = false;
             }
-          } catch (error) {
-            document.getElementById("statusTitle").textContent = "Error";
-            document.getElementById("statusMessage").textContent = error.message;
           }
-          statusModal.show();
-        });
-
-        document.getElementById("delete-btn").addEventListener("click", () => {
-          deleteModal.show();
-        });
-
-        document.getElementById("confirm-delete").addEventListener("click", async () => {
-          try {
-            const response = await fetch(`/api/sessions/${sessionId}`, {
-              method: "DELETE",
-            });
-            const result = await response.json();
-            if (result.success) {
-              document.getElementById("statusTitle").textContent = "Success";
-              document.getElementById("statusMessage").textContent =
-                "Session deleted successfully.";
-              statusModal.show();
-              window.location.href = "/";
-            } else {
-              throw new Error(result.error);
-            }
-          } catch (error) {
-            document.getElementById("statusTitle").textContent = "Error";
-            document.getElementById("statusMessage").textContent = error.message;
-            statusModal.show();
-          }
-        });
-
-        // Handle Schedule Message Form Submission
-        document.getElementById("schedule-form").addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const to = document.getElementById("schedule-phone").value;
-          const message = document.getElementById("schedule-message").value;
-          const scheduledTime = document.getElementById("scheduled-time").value;
-
-          let payload = {
-            to,
-            message,
-            scheduledTime,
+          // Format file size
+          const formatFileSize = (bytes) => {
+            if (bytes === 0) return "0 Bytes";
+            const k = 1024;
+            const sizes = ["Bytes", "KB", "MB", "GB"];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
           };
 
-          console.log(document.querySelector("#isRecurring").checked);
-          // Add recurring options if selected
-          if (document.querySelector("#isRecurring").checked) {
-            const recurringType = document.querySelector(
-              'input[name="recurringType"]:checked'
-            ).value;
-            let recurringOptions = {
-              type: recurringType,
-            };
+          // Format date time
+          const formatDateTime = (dateTimeStr) => {
+            return new Date(dateTimeStr).toLocaleString();
+          };
 
-            // If custom days are selected, add them to the options
-            if (recurringType === "custom") {
-              const days = [
-                "monday",
-                "tuesday",
-                "wednesday",
-                "thursday",
-                "friday",
-                "saturday",
-                "sunday",
-              ];
-              const selectedDays = days.filter(
-                (day) => document.getElementById(`day-${day}`).value === "on"
-              );
+          // Capitalize first letter
+          const capitalizeFirstLetter = (string) => {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+          };
 
-              if (selectedDays.length === 0) {
-                alert("Please select at least one day for custom recurring schedule");
-                return;
+          // Load session info
+          const loadSessionInfo = async () => {
+            try {
+              const response = await fetch("/api/sessions");
+              const data = await response.json();
+
+              if (data.success) {
+                const session = data.data.find((s) => s.id === sessionId);
+                if (session) {
+                  sessionConnected.value = session.connected;
+                }
               }
-
-              recurringOptions.days = selectedDays;
+            } catch (error) {
+              console.error("Error loading session info:", error);
             }
+          };
 
-            // Add end date if specified
-            if (document.getElementById("endDate")) {
-              recurringOptions.endDate =
-                document.getElementById("endDate").value == ""
-                  ? null
-                  : new Date(document.getElementById("endDate").value).toISOString();
+          // Load scheduled messages
+          const loadScheduledMessages = async () => {
+            try {
+              const response = await fetch(`/api/schedule-messages/${sessionId}`);
+              const data = await response.json();
+              if (data.success) {
+                scheduledMessages.value = data.data;
+              } else {
+                throw new Error(data.error);
+              }
+            } catch (error) {
+              showStatusModal("Error", error.message);
             }
+          };
 
-            payload.recurringOptions = recurringOptions;
-          }
+          // Show status modal
+          const showStatusModal = (title, message) => {
+            statusTitle.value = title;
+            statusMessage.value = message;
+            statusModal.show();
+          };
 
-          console.log(payload);
+          // Show delete modal
+          const showDeleteModal = () => {
+            deleteModal.show();
+          };
 
-          try {
-            const response = await fetch(`/api/schedule-message/${sessionId}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-            const result = await response.json();
-            if (result.success) {
-              showStatusModal("Success", "Message scheduled successfully.");
-              loadScheduledMessages();
-              document.getElementById("schedule-form").reset();
-            } else {
-              throw new Error(result.error);
+          // Clear logs
+          const clearLogs = () => {
+            messageLogs.value = [];
+          };
+
+          // Send message
+          const sendMessage = async () => {
+            try {
+              const response = await fetch(`/api/send-message/${sessionId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  to: messageForm.value.phone,
+                  message: messageForm.value.message,
+                }),
+              });
+              const result = await response.json();
+              if (result.success) {
+                showStatusModal("Success", "Message sent successfully.");
+              } else {
+                throw new Error(result.error);
+              }
+            } catch (error) {
+              showStatusModal("Error", error.message);
             }
-          } catch (error) {
-            showStatusModal("Error", error.message);
-          }
-        });
+          };
 
-        // Show/hide recurring options based on checkbox
-        document.getElementById("isRecurring").addEventListener("change", function () {
-          const recurringOptions = document.getElementById("recurringOptions");
-          recurringOptions.classList.toggle("d-none", !this.checked);
-        });
-
-        // Show/hide custom days selection based on recurring type
-        document.querySelectorAll('input[name="recurringType"]').forEach((radio) => {
-          radio.addEventListener("change", function () {
-            const customDaysSelection = document.getElementById("customDaysSelection");
-            customDaysSelection.classList.toggle("d-none", this.value !== "custom");
-          });
-        });
-
-        // Refresh Scheduled Messages
-        document
-          .getElementById("refresh-scheduled")
-          .addEventListener("click", loadScheduledMessages);
-      });
-
-      // Media Preview Functionality
-      document.addEventListener("DOMContentLoaded", function () {
-        const mediaFileInput = document.getElementById("media-file");
-        const mediaPreviewPlaceholder = document.getElementById("media-preview-placeholder");
-        const mediaPreviewContent = document.getElementById("media-preview-content");
-        const mediaFileInfo = document.getElementById("media-file-info");
-        const mediaFileName = document.getElementById("media-file-name");
-        const mediaFileSize = document.getElementById("media-file-size");
-        const mediaFileType = document.getElementById("media-file-type");
-        const mediaUrlInput = document.getElementById("media-url");
-        const mediaTypeSelect = document.getElementById("media-type");
-
-        // Function to format file size
-        function formatFileSize(bytes) {
-          if (bytes === 0) return "0 Bytes";
-          const k = 1024;
-          const sizes = ["Bytes", "KB", "MB", "GB"];
-          const i = Math.floor(Math.log(bytes) / Math.log(k));
-          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-        }
-
-        // Function to clear preview
-        function clearPreview() {
-          mediaPreviewContent.innerHTML = "";
-          mediaPreviewContent.style.display = "none";
-          mediaPreviewPlaceholder.style.display = "block";
-          mediaFileInfo.style.display = "none";
-        }
-
-        // Function to show preview
-        function showPreview(file) {
-          // Clear previous preview
-          mediaPreviewContent.innerHTML = "";
-
-          // Show file info
-          mediaFileName.textContent = file.name;
-          mediaFileSize.textContent = formatFileSize(file.size);
-          mediaFileType.textContent = file.type;
-
-          // Create preview based on file type
-          if (file.type.startsWith("image/")) {
-            const img = document.createElement("img");
-            img.src = URL.createObjectURL(file);
-            img.onload = function () {
-              URL.revokeObjectURL(this.src);
-            };
-            mediaPreviewContent.appendChild(img);
-          } else if (file.type.startsWith("video/")) {
-            const video = document.createElement("video");
-            video.src = URL.createObjectURL(file);
-            video.controls = true;
-            video.onload = function () {
-              URL.revokeObjectURL(this.src);
-            };
-            mediaPreviewContent.appendChild(video);
-          } else if (file.type.startsWith("audio/")) {
-            const audio = document.createElement("audio");
-            audio.src = URL.createObjectURL(file);
-            audio.controls = true;
-            audio.onload = function () {
-              URL.revokeObjectURL(this.src);
-            };
-            mediaPreviewContent.appendChild(audio);
-          } else {
-            // For documents and other files
-            const icon = document.createElement("i");
-            icon.className = "bi bi-file-earmark-text media-file-icon";
-            const fileTypeText = document.createElement("p");
-            fileTypeText.className = "mt-2";
-            fileTypeText.textContent = file.type || "Document";
-
-            mediaPreviewContent.appendChild(icon);
-            mediaPreviewContent.appendChild(fileTypeText);
-          }
-
-          // Show preview and hide placeholder
-          mediaPreviewContent.style.display = "block";
-          mediaPreviewPlaceholder.style.display = "none";
-          mediaFileInfo.style.display = "block";
-        }
-
-        // Handle file selection
-        if (mediaFileInput) {
-          mediaFileInput.addEventListener("change", function (e) {
-            const file = e.target.files[0];
+          // Handle file change
+          const handleFileChange = (event) => {
+            const file = event.target.files[0];
             if (file) {
-              showPreview(file);
-              // Clear URL input when file is selected
-              if (mediaUrlInput) {
-                mediaUrlInput.value = "";
+              mediaForm.value.mediaFile = file;
+              mediaForm.value.mediaUrl = ""; // Clear URL input
+              showMediaPreview.value = true;
+
+              // Update file info
+              mediaFileInfo.value = {
+                name: file.name,
+                size: formatFileSize(file.size),
+                type: file.type,
+              };
+
+              // Create preview based on file type
+              if (file.type.startsWith("image/")) {
+                mediaPreviewContent.value = `<img src="${URL.createObjectURL(
+                  file
+                )}" class="img-fluid">`;
+              } else if (file.type.startsWith("video/")) {
+                mediaPreviewContent.value = `<video src="${URL.createObjectURL(
+                  file
+                )}" controls class="img-fluid"></video>`;
+              } else if (file.type.startsWith("audio/")) {
+                mediaPreviewContent.value = `<audio src="${URL.createObjectURL(
+                  file
+                )}" controls class="w-100"></audio>`;
+              } else {
+                mediaPreviewContent.value = `
+                <i class="bi bi-file-earmark-text media-file-icon"></i>
+                <p class="mt-2">${file.type || "Document"}</p>
+              `;
               }
             } else {
-              clearPreview();
+              clearMediaPreview();
             }
-          });
-        }
+          };
 
-        // Handle URL input
-        if (mediaUrlInput) {
-          mediaUrlInput.addEventListener("input", function () {
-            // Clear file input when URL is entered
-            if (this.value && mediaFileInput) {
-              mediaFileInput.value = "";
-              clearPreview();
+          // Handle URL input
+          const handleUrlInput = () => {
+            if (mediaForm.value.mediaUrl) {
+              // Clear file input
+              mediaForm.value.mediaFile = null;
+              const fileInput = document.getElementById("media-file");
+              if (fileInput) fileInput.value = "";
 
-              // Show URL preview based on selected media type
-              const mediaType = mediaTypeSelect ? mediaTypeSelect.value : "image";
-              const url = this.value;
+              showMediaPreview.value = true;
+              const url = mediaForm.value.mediaUrl;
+              const mediaType = mediaForm.value.mediaType;
 
-              if (url) {
-                mediaPreviewContent.innerHTML = "";
+              // Update file info
+              mediaFileInfo.value = {
+                name: url.split("/").pop() || "Remote file",
+                size: "Unknown size",
+                type: mediaType,
+              };
 
-                if (mediaType === "image") {
-                  const img = document.createElement("img");
-                  img.src = url;
-                  img.onerror = function () {
-                    this.onerror = null;
-                    this.src = "";
-                    this.alt = "Image preview not available";
-                    this.style.display = "none";
+              // Create preview based on media type
+              if (mediaType === "image") {
+                mediaPreviewContent.value = `<img src="${url}" class="img-fluid" onerror="this.onerror=null;this.style.display='none';this.insertAdjacentHTML('afterend', '<p class=\'text-danger\'>Unable to preview image URL</p>');">`;
+              } else if (mediaType === "video") {
+                mediaPreviewContent.value = `
+                <i class="bi bi-film media-file-icon"></i>
+                <p class="mt-2">Video URL (preview not available)</p>
+              `;
+              } else if (mediaType === "audio") {
+                mediaPreviewContent.value = `
+                <i class="bi bi-music-note-beamed media-file-icon"></i>
+                <p class="mt-2">Audio URL (preview not available)</p>
+              `;
+              } else {
+                mediaPreviewContent.value = `
+                <i class="bi bi-file-earmark-text media-file-icon"></i>
+                <p class="mt-2">Document URL (preview not available)</p>
+              `;
+              }
+            } else if (!mediaForm.value.mediaFile) {
+              clearMediaPreview();
+            }
+          };
 
-                    const errorMsg = document.createElement("p");
-                    errorMsg.className = "text-danger";
-                    errorMsg.textContent = "Unable to preview image URL";
-                    mediaPreviewContent.appendChild(errorMsg);
-                  };
-                  mediaPreviewContent.appendChild(img);
-                } else if (mediaType === "video") {
-                  const videoIcon = document.createElement("i");
-                  videoIcon.className = "bi bi-film media-file-icon";
-                  const urlText = document.createElement("p");
-                  urlText.className = "mt-2";
-                  urlText.textContent = "Video URL (preview not available)";
+          // Clear media preview
+          const clearMediaPreview = () => {
+            showMediaPreview.value = false;
+            mediaPreviewContent.value = "";
+            mediaFileInfo.value = {
+              name: "",
+              size: "",
+              type: "",
+            };
+            mediaForm.value.mediaFile = null;
+            mediaForm.value.mediaUrl = "";
+          };
 
-                  mediaPreviewContent.appendChild(videoIcon);
-                  mediaPreviewContent.appendChild(urlText);
-                } else if (mediaType === "audio") {
-                  const audioIcon = document.createElement("i");
-                  audioIcon.className = "bi bi-music-note-beamed media-file-icon";
-                  const urlText = document.createElement("p");
-                  urlText.className = "mt-2";
-                  urlText.textContent = "Audio URL (preview not available)";
+          // Send media
+          const sendMedia = async () => {
+            try {
+              let response;
 
-                  mediaPreviewContent.appendChild(audioIcon);
-                  mediaPreviewContent.appendChild(urlText);
-                } else {
-                  const docIcon = document.createElement("i");
-                  docIcon.className = "bi bi-file-earmark-text media-file-icon";
-                  const urlText = document.createElement("p");
-                  urlText.className = "mt-2";
-                  urlText.textContent = "Document URL (preview not available)";
+              // Check if a file is selected
+              if (mediaForm.value.mediaFile) {
+                // Use FormData for file upload
+                const formData = new FormData();
+                formData.append("to", mediaForm.value.phone);
+                formData.append("caption", mediaForm.value.caption);
+                formData.append("media", mediaForm.value.mediaFile);
 
-                  mediaPreviewContent.appendChild(docIcon);
-                  mediaPreviewContent.appendChild(urlText);
+                response = await fetch(`/api/send-media/${sessionId}`, {
+                  method: "POST",
+                  body: formData,
+                });
+              } else {
+                // Use JSON for URL-based media
+                if (!mediaForm.value.mediaUrl || !mediaForm.value.mediaType) {
+                  throw new Error("Please provide either a file or a media URL with type");
                 }
 
-                // Show preview and hide placeholder
-                mediaPreviewContent.style.display = "block";
-                mediaPreviewPlaceholder.style.display = "none";
-
-                // Update file info
-                mediaFileName.textContent = url.split("/").pop() || "Remote file";
-                mediaFileSize.textContent = "Unknown size";
-                mediaFileType.textContent = mediaType;
-                mediaFileInfo.style.display = "block";
+                response = await fetch(`/api/send-media/${sessionId}`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    to: mediaForm.value.phone,
+                    mediaUrl: mediaForm.value.mediaUrl,
+                    mediaType: mediaForm.value.mediaType,
+                    caption: mediaForm.value.caption,
+                  }),
+                });
               }
-            } else if (!this.value) {
-              clearPreview();
-            }
-          });
-        }
 
-        // Handle media type change for URL
-        if (mediaTypeSelect) {
-          mediaTypeSelect.addEventListener("change", function () {
-            if (mediaUrlInput && mediaUrlInput.value) {
-              // Trigger URL input handler to update preview
-              const event = new Event("input");
-              mediaUrlInput.dispatchEvent(event);
+              const result = await response.json();
+              if (result.success) {
+                showStatusModal("Success", "Media sent successfully.");
+              } else {
+                throw new Error(result.error);
+              }
+            } catch (error) {
+              showStatusModal("Error", error.message);
             }
-          });
-        }
+          };
 
-        // Reset preview when form is reset
-        const mediaForm = document.getElementById("media-form");
-        if (mediaForm) {
-          mediaForm.addEventListener("reset", clearPreview);
-        }
-      });
+          // Schedule message
+          const scheduleMessage = async () => {
+            let payload = {
+              to: scheduleForm.value.phone,
+              message: scheduleForm.value.message,
+              scheduledTime: scheduleForm.value.scheduledTime,
+            };
+
+            // Add recurring options if selected
+            if (scheduleForm.value.isRecurring) {
+              const recurringType = scheduleForm.value.recurringType;
+              let recurringOptions = {
+                type: recurringType,
+              };
+
+              // If custom days are selected, add them to the options
+              if (recurringType === "custom") {
+                const selectedDays = Object.keys(scheduleForm.value.selectedDays).filter(
+                  (day) => scheduleForm.value.selectedDays[day]
+                );
+
+                if (selectedDays.length === 0) {
+                  showStatusModal(
+                    "Error",
+                    "Please select at least one day for custom recurring schedule"
+                  );
+                  return;
+                }
+
+                recurringOptions.days = selectedDays;
+              }
+
+              // Add end date if specified
+              if (scheduleForm.value.endDate) {
+                recurringOptions.endDate = scheduleForm.value.endDate
+                  ? new Date(scheduleForm.value.endDate).toISOString()
+                  : null;
+              }
+
+              payload.recurringOptions = recurringOptions;
+            }
+
+            try {
+              const response = await fetch(`/api/schedule-message/${sessionId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              const result = await response.json();
+              if (result.success) {
+                showStatusModal("Success", "Message scheduled successfully.");
+                loadScheduledMessages();
+                // Reset form
+                scheduleForm.value = {
+                  phone: "",
+                  message: "",
+                  scheduledTime: "",
+                  isRecurring: false,
+                  recurringType: "daily",
+                  selectedDays: {
+                    monday: false,
+                    tuesday: false,
+                    wednesday: false,
+                    thursday: false,
+                    friday: false,
+                    saturday: false,
+                    sunday: false,
+                  },
+                  endDate: "",
+                };
+              } else {
+                throw new Error(result.error);
+              }
+            } catch (error) {
+              showStatusModal("Error", error.message);
+            }
+          };
+
+          // Edit scheduled message
+          const editScheduledMessage = async (messageId) => {
+            try {
+              const message = scheduledMessages.value.find((msg) => msg.id === messageId);
+              if (message) {
+                // Populate form with existing data using prompts (this should be replaced with a proper modal)
+                const newTo = prompt(
+                  "Enter new phone number:",
+                  message.to.replace("@s.whatsapp.net", "")
+                );
+                if (newTo === null) return; // Cancelled
+
+                const newMessage = prompt("Enter new message:", message.message);
+                if (newMessage === null) return; // Cancelled
+
+                const newScheduledTime = prompt(
+                  "Enter new scheduled time (YYYY-MM-DDTHH:MM):",
+                  message.scheduledTime.slice(0, 16)
+                );
+                if (newScheduledTime === null) return; // Cancelled
+
+                // Send update request
+                const updateResponse = await fetch(
+                  `/api/schedule-message/${sessionId}/${messageId}`,
+                  {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      to: newTo,
+                      message: newMessage,
+                      scheduledTime: newScheduledTime,
+                    }),
+                  }
+                );
+
+                const updateResult = await updateResponse.json();
+                if (updateResult.success) {
+                  showStatusModal("Success", "Scheduled message updated successfully.");
+                  loadScheduledMessages();
+                } else {
+                  throw new Error(updateResult.error);
+                }
+              } else {
+                throw new Error("Scheduled message not found");
+              }
+            } catch (error) {
+              showStatusModal("Error", error.message);
+            }
+          };
+
+          // Delete scheduled message
+          const deleteScheduledMessage = async (messageId) => {
+            try {
+              const response = await fetch(`/api/schedule-message/${sessionId}/${messageId}`, {
+                method: "DELETE",
+              });
+              const result = await response.json();
+              if (result.success) {
+                showStatusModal("Success", "Scheduled message deleted successfully.");
+                loadScheduledMessages();
+              } else {
+                throw new Error(result.error);
+              }
+            } catch (error) {
+              showStatusModal("Error", error.message);
+            }
+          };
+
+          // Logout session
+          const logoutSession = async () => {
+            try {
+              const response = await fetch(`/api/sessions/${sessionId}/logout`, {
+                method: "POST",
+              });
+              const result = await response.json();
+              if (result.success) {
+                showStatusModal("Success", "Session logged out successfully.");
+                sessionConnected.value = false;
+              } else {
+                throw new Error(result.error);
+              }
+            } catch (error) {
+              showStatusModal("Error", error.message);
+            }
+          };
+
+          // Delete session
+          const deleteSession = async () => {
+            try {
+              const response = await fetch(`/api/sessions/${sessionId}`, {
+                method: "DELETE",
+              });
+              const result = await response.json();
+              if (result.success) {
+                showStatusModal("Success", "Session deleted successfully.");
+                // Redirect to home after a short delay
+                setTimeout(() => {
+                  window.location.href = "/";
+                }, 2000);
+              } else {
+                throw new Error(result.error);
+              }
+            } catch (error) {
+              showStatusModal("Error", error.message);
+            }
+          };
+
+          // Socket.io event handlers
+          onMounted(() => {
+            // Initialize Bootstrap modals
+            statusModal = new bootstrap.Modal(document.getElementById("statusModal"));
+            deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+
+            // Load initial data
+            loadSessionInfo();
+            loadScheduledMessages();
+
+            // Set up socket listeners
+            socket.on(`qr.${sessionId}`, (data) => {
+              qrCode.value = data.qrCode;
+            });
+
+            socket.on(`session.${sessionId}.connected`, (data) => {
+              sessionConnected.value = data.connected;
+            });
+
+            socket.on("session.update", (data) => {
+              if (data.action === "remove" && data.sessionId === sessionId) {
+                alert("Session has been removed.");
+                window.location.href = "/";
+              } else if (data.action === "update" && data.session.id === sessionId) {
+                // Update session info if needed
+              }
+            });
+
+            socket.on(`${sessionId}.message`, (message) => {
+              messageLogs.value = message.messages.map((msg) => msg).reverse();
+            });
+          });
+
+          return {
+            // State
+            sessionConnected,
+            qrCode,
+            statusTitle,
+            statusMessage,
+            messageLogs,
+            scheduledMessages,
+            messageForm,
+            mediaForm,
+            scheduleForm,
+            showMediaPreview,
+            mediaPreviewContent,
+            mediaFileInfo,
+            daysList,
+
+            // Methods
+            sendMessage,
+            handleFileChange,
+            handleUrlInput,
+            clearMediaPreview,
+            sendMedia,
+            scheduleMessage,
+            loadScheduledMessages,
+            editScheduledMessage,
+            deleteScheduledMessage,
+            showDeleteModal,
+            deleteSession,
+            logoutSession,
+            clearLogs,
+            formatDateTime,
+            capitalizeFirstLetter,
+
+            // bulk message
+            excelData,
+            template,
+            timeConfig,
+            showUploadInfo,
+            fileDetails,
+            errorMessage,
+            parametersInfo,
+            isSubmitDisabled,
+            showPreview,
+            previewData,
+            handleFileUpload,
+            resetForm,
+            submitForm,
+          };
+        },
+      }).mount("#app");
     </script>
   </body>
 </html>

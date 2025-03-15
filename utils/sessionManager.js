@@ -400,10 +400,12 @@ exports.createSessionManager = (io) => {
     to,
     message,
     scheduledTime,
-    recurringOptions = null
+    recurringOptions = null,
+    messageId = null
   ) => {
-    const messageId = generateUniqueId();
-    console.log("messageId", messageId);
+    if (messageId === null) {
+      messageId = generateUniqueId();
+    }
 
     let task;
 
@@ -550,14 +552,23 @@ exports.createSessionManager = (io) => {
       });
 
       scheduledTasks.set(messageId, task);
-      await saveScheduledMessage(sessionId, {
-        id: messageId,
-        to,
-        message,
-        scheduledTime,
-        status: "scheduled",
-        type: "one-time",
-      });
+
+      if (messageId === null) {
+        await saveScheduledMessage(sessionId, {
+          id: messageId,
+          to,
+          message,
+          scheduledTime,
+          status: "scheduled",
+          type: "one-time",
+        });
+      } else {
+        await updateScheduledMessage(sessionId, messageId, {
+          to,
+          message,
+          scheduledTime,
+        });
+      }
     }
 
     return messageId;
@@ -581,10 +592,18 @@ exports.createSessionManager = (io) => {
   const editScheduledMessage = async (sessionId, messageId, updatedData) => {
     const message = await updateScheduledMessage(sessionId, messageId, updatedData);
     if (scheduledTasks.has(messageId)) {
+      console.log("Stopping task:", messageId);
       scheduledTasks.get(messageId).stop();
       scheduledTasks.delete(messageId);
     }
-    await scheduleMessage(sessionId, message.to, message.message, message.scheduledTime);
+    await scheduleMessage(
+      sessionId,
+      message.to,
+      message.message,
+      message.scheduledTime,
+      null,
+      messageId
+    );
     return message;
   };
 
@@ -607,7 +626,7 @@ exports.createSessionManager = (io) => {
       return [];
     }
     const data = await fs.readJson(filePath);
-    console.log("CRONJOB:", cron.getTasks());
+    // console.log("CRONJOB:", cron.getTasks());
     return data.messages;
   };
 
@@ -617,9 +636,7 @@ exports.createSessionManager = (io) => {
     if (await fs.pathExists(filePath)) {
       data = await fs.readJson(filePath);
     }
-    console.log("data awal: ", data);
     data.messages.push(message);
-    console.log("data akhir: ", data);
     await fs.writeJson(filePath, data, { spaces: 2 });
   };
 

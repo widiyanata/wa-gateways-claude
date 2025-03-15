@@ -124,7 +124,12 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
               <div>
                 <h1 id="session-title"><%= sessionId %></h1>
-                <div id="session-status"></div>
+                <span id="session-status">
+                  <span
+                    :class="['online-indicator', sessionConnected ? 'online' : 'offline']"
+                  ></span>
+                  {{ sessionConnected ? "Online" : "Offline" }}
+                </span>
                 <!-- <img id="qrCode" src="#" alt="QR Code" /> -->
               </div>
               <a href="/" class="btn btn-outline-secondary">
@@ -735,7 +740,7 @@
                                           @change="handleFileUpload"
                                         />
                                         <small class="text-muted"
-                                          >Required columns: to, name. Optional: message,
+                                          >Required columns: to. Optional: name, message,
                                           scheduledTime</small
                                         >
                                       </div>

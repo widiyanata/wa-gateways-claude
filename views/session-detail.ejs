@@ -1443,7 +1443,11 @@
               const result = await response.json();
 
               // Handle success response
-              alert(`Successfully scheduled ${processedData.length} messages!`);
+              showStatusModal(
+                "Success",
+                `Successfully scheduled ${processedData.length} messages!`
+              );
+              loadScheduledMessages();
               resetForm();
             } catch (error) {
               console.error("Error submitting form:", error);

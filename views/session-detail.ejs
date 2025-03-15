@@ -1487,6 +1487,22 @@
                 // Get all unique keys from all objects
                 const allKeys = [...new Set(data.flatMap((obj) => Object.keys(obj)))];
 
+                // check if certain keys are missing
+                const requiredKeys = ["to"];
+                const missingKeys = requiredKeys.filter(
+                  (key) => !allKeys.includes(key.toLowerCase())
+                );
+                if (missingKeys.length > 0) {
+                  errorMessage.value = `<strong>Excel validation failed:</strong><ul>${missingKeys
+                    .map(
+                      (key) =>
+                        `<li><small>Column <b><u>${key}</u></b> is missing, please add it (or rename it) to the Excel file</small></li>`
+                    )
+                    .join("")}</ul>`;
+                  showUploadInfo.value = false;
+                  return;
+                }
+
                 // Format parameters info
                 parametersInfo.value = `Use ${allKeys
                   .map((key) => `{{ ${key} }}`)

@@ -1,11 +1,18 @@
 const fs = require("fs-extra");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
+const OpenAI = require("openai");
 
 // Constants
 const SESSIONS_DIR = path.join(process.cwd(), "sessions");
 const DEFAULT_CONTEXT_LIMIT = 10; // Number of messages to keep in context
 const DEFAULT_MAX_TOKENS = 150; // Default max tokens for AI response
+
+// AI Service Providers
+const AI_PROVIDERS = {
+  OPENAI: "openai",
+  DEEPSEEK: "deepseek",
+};
 
 /**
  * Creates an AI Manager for handling AI-powered responses
@@ -29,9 +36,12 @@ exports.createAIManager = (io) => {
     // Create default configuration
     const defaultConfig = {
       enabled: false,
+      provider: AI_PROVIDERS.OPENAI, // Default provider
+      openaiApiKey: "", // OpenAI API key
+      deepseekApiKey: "", // DeepSeek API key
       instructions:
         "You are a helpful assistant. Respond to messages in a friendly and concise manner.",
-      model: "gpt-3.5-turbo",
+      model: "gpt-3.5-turbo", // Default model for OpenAI
       maxTokens: DEFAULT_MAX_TOKENS,
       temperature: 0.7,
       contextLimit: DEFAULT_CONTEXT_LIMIT,
@@ -292,23 +302,208 @@ exports.createAIManager = (io) => {
   };
 
   /**
-   * Generate AI response (placeholder for actual API implementation)
+   * Generate AI response using the configured provider
    * @param {Array} messages - The conversation messages
    * @param {Object} config - The AI configuration
    * @returns {Promise<Object>} The AI response
    */
   const generateAIResponse = async (messages, config) => {
-    // This is a placeholder for the actual API call
-    // In a real implementation, this would call the OpenAI API or another AI service
+    try {
+      // Check which provider to use
+      switch (config.provider) {
+        case AI_PROVIDERS.OPENAI:
+          return await generateOpenAIResponse(messages, config);
+        case AI_PROVIDERS.DEEPSEEK:
+          return await generateDeepSeekResponse(messages, config);
+        default:
+          return {
+            id: uuidv4(),
+            content: `Unknown AI provider: ${config.provider}. Please select a valid provider in the AI settings.`,
+            model: config.model,
+            created: new Date().toISOString(),
+          };
+      }
+    } catch (error) {
+      console.error(`Error in generateAIResponse: ${error.message}`);
 
-    // For now, return a mock response
-    return {
-      id: uuidv4(),
-      content:
-        "This is a placeholder AI response. To implement actual AI responses, you need to integrate with an AI service API like OpenAI.",
-      model: config.model,
-      created: new Date().toISOString(),
-    };
+      // Return a fallback response
+      return {
+        id: uuidv4(),
+        content: `Error generating AI response: ${error.message}`,
+        model: config.model,
+        created: new Date().toISOString(),
+        error: error.message,
+      };
+    }
+  };
+
+  /**
+   * Generate AI response using OpenAI API
+   * @param {Array} messages - The conversation messages
+   * @param {Object} config - The AI configuration
+   * @returns {Promise<Object>} The AI response
+   */
+  const generateOpenAIResponse = async (messages, config) => {
+    try {
+      // Check if API key is provided
+      if (!config.openaiApiKey) {
+        return {
+          id: uuidv4(),
+          content:
+            "OpenAI API key is not configured. Please add your OpenAI API key in the AI settings.",
+          model: config.model,
+          created: new Date().toISOString(),
+        };
+      }
+
+      // Initialize OpenAI client
+      const openai = new OpenAI({
+        apiKey: config.openaiApiKey,
+      });
+
+      try {
+        // Call OpenAI API
+        const response = await openai.chat.completions.create({
+          model: config.model,
+          messages: messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          max_tokens: config.maxTokens,
+          temperature: config.temperature,
+        });
+
+        // Extract the response
+        const result = response.choices[0].message;
+
+        return {
+          id: response.id,
+          content: result.content,
+          model: config.model,
+          provider: AI_PROVIDERS.OPENAI,
+          created: new Date(response.created * 1000).toISOString(),
+          usage: response.usage,
+        };
+      } catch (error) {
+        console.error(`OpenAI API error: ${error.message}`);
+
+        // Return a fallback response
+        return {
+          id: uuidv4(),
+          content: `Error generating OpenAI response: ${error.message}. Please check your API key and settings.`,
+          model: config.model,
+          provider: AI_PROVIDERS.OPENAI,
+          created: new Date().toISOString(),
+          error: error.message,
+        };
+      }
+    } catch (error) {
+      console.error(`Error in generateOpenAIResponse: ${error.message}`);
+
+      // Return a fallback response
+      return {
+        id: uuidv4(),
+        content: `Error generating OpenAI response: ${error.message}`,
+        model: config.model,
+        provider: AI_PROVIDERS.OPENAI,
+        created: new Date().toISOString(),
+        error: error.message,
+      };
+    }
+  };
+
+  /**
+   * Generate AI response using DeepSeek API
+   * @param {Array} messages - The conversation messages
+   * @param {Object} config - The AI configuration
+   * @returns {Promise<Object>} The AI response
+   */
+  const generateDeepSeekResponse = async (messages, config) => {
+    try {
+      // Check if API key is provided
+      if (!config.deepseekApiKey) {
+        return {
+          id: uuidv4(),
+          content:
+            "DeepSeek API key is not configured. Please add your DeepSeek API key in the AI settings.",
+          model: config.model,
+          created: new Date().toISOString(),
+        };
+      }
+
+      // Initialize DeepSeek client
+      const deepseek = new OpenAI({
+        baseURL: "https://api.deepseek.com",
+        apiKey: config.deepseekApiKey,
+      });
+
+      try {
+        // Map models to DeepSeek models if needed
+        let deepseekModel = config.model;
+        if (config.model.startsWith("gpt-")) {
+          // If using an OpenAI model name, map to equivalent DeepSeek model
+          switch (config.model) {
+            case "gpt-3.5-turbo":
+              deepseekModel = "deepseek-chat";
+              break;
+            case "gpt-4":
+            case "gpt-4-turbo":
+            case "gpt-4o":
+              deepseekModel = "deepseek-chat-pro";
+              break;
+            default:
+              deepseekModel = "deepseek-chat";
+          }
+        }
+
+        // Call DeepSeek API
+        const response = await deepseek.chat.completions.create({
+          model: deepseekModel,
+          messages: messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          max_tokens: config.maxTokens,
+          temperature: config.temperature,
+        });
+
+        // Extract the response
+        const result = response.choices[0].message;
+
+        return {
+          id: response.id || uuidv4(),
+          content: result.content,
+          model: deepseekModel,
+          provider: AI_PROVIDERS.DEEPSEEK,
+          created: new Date().toISOString(),
+          usage: response.usage,
+        };
+      } catch (error) {
+        console.error(`DeepSeek API error: ${error.message}`);
+
+        // Return a fallback response
+        return {
+          id: uuidv4(),
+          content: `Error generating DeepSeek response: ${error.message}. Please check your API key and settings.`,
+          model: config.model,
+          provider: AI_PROVIDERS.DEEPSEEK,
+          created: new Date().toISOString(),
+          error: error.message,
+        };
+      }
+    } catch (error) {
+      console.error(`Error in generateDeepSeekResponse: ${error.message}`);
+
+      // Return a fallback response
+      return {
+        id: uuidv4(),
+        content: `Error generating DeepSeek response: ${error.message}`,
+        model: config.model,
+        provider: AI_PROVIDERS.DEEPSEEK,
+        created: new Date().toISOString(),
+        error: error.message,
+      };
+    }
   };
 
   /**

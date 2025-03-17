@@ -1068,14 +1068,82 @@
                           </div>
 
                           <div class="mb-3">
-                            <label for="ai-model" class="form-label">AI Model</label>
-                            <select class="form-select" id="ai-model" v-model="aiConfig.model">
-                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                              <option value="gpt-4">GPT-4</option>
-                              <option value="claude-3-haiku">Claude 3 Haiku</option>
-                              <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-                              <option value="claude-3-opus">Claude 3 Opus</option>
+                            <label for="ai-provider" class="form-label">AI Provider</label>
+                            <select
+                              class="form-select"
+                              id="ai-provider"
+                              v-model="aiConfig.provider"
+                            >
+                              <option value="openai">OpenAI</option>
+                              <option value="deepseek">DeepSeek</option>
                             </select>
+                          </div>
+
+                          <!-- OpenAI Settings -->
+                          <div v-if="aiConfig.provider === 'openai'" class="mb-3 border-start ps-3">
+                            <div class="mb-3">
+                              <label for="openai-api-key" class="form-label">OpenAI API Key</label>
+                              <input
+                                type="password"
+                                class="form-control"
+                                id="openai-api-key"
+                                v-model="aiConfig.openaiApiKey"
+                                placeholder="sk-..."
+                              />
+                              <div class="form-text">
+                                Your OpenAI API key is stored locally and never sent to our servers.
+                              </div>
+                            </div>
+
+                            <div class="mb-3">
+                              <label for="openai-model" class="form-label">OpenAI Model</label>
+                              <select
+                                class="form-select"
+                                id="openai-model"
+                                v-model="aiConfig.model"
+                              >
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="gpt-4o">GPT-4o</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <!-- DeepSeek Settings -->
+                          <div
+                            v-if="aiConfig.provider === 'deepseek'"
+                            class="mb-3 border-start ps-3"
+                          >
+                            <div class="mb-3">
+                              <label for="deepseek-api-key" class="form-label"
+                                >DeepSeek API Key</label
+                              >
+                              <input
+                                type="password"
+                                class="form-control"
+                                id="deepseek-api-key"
+                                v-model="aiConfig.deepseekApiKey"
+                                placeholder="sk-..."
+                              />
+                              <div class="form-text">
+                                Your DeepSeek API key is stored locally and never sent to our
+                                servers.
+                              </div>
+                            </div>
+
+                            <div class="mb-3">
+                              <label for="deepseek-model" class="form-label">DeepSeek Model</label>
+                              <select
+                                class="form-select"
+                                id="deepseek-model"
+                                v-model="aiConfig.model"
+                              >
+                                <option value="deepseek-chat">DeepSeek Chat</option>
+                                <option value="deepseek-chat-pro">DeepSeek Chat Pro</option>
+                                <option value="deepseek-coder">DeepSeek Coder</option>
+                              </select>
+                            </div>
                           </div>
 
                           <div class="row mb-3">

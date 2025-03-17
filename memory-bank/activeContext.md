@@ -2,7 +2,7 @@
 
 ## Current Status
 
-The WhatsApp Gateway project is currently in a functional state with core features implemented and the AI Integration enhanced with multiple AI service providers. The application provides a web interface and API for managing WhatsApp sessions, sending messages, scheduling future messages, and now includes AI-powered automated responses using OpenAI or DeepSeek AI. The system uses the Baileys library to interact with WhatsApp Web and provides a user-friendly interface for non-technical users.
+The WhatsApp Gateway project is currently in a functional state with core features implemented and the AI Integration enhanced with multiple AI service providers. The application provides a web interface and API for managing WhatsApp sessions, sending messages, scheduling future messages, and now includes AI-powered automated responses using OpenAI or DeepSeek AI with human-like typing and reading delay simulation. The system uses the Baileys library to interact with WhatsApp Web and provides a user-friendly interface for non-technical users.
 
 ## Recent Changes
 
@@ -12,6 +12,8 @@ The WhatsApp Gateway project is currently in a functional state with core featur
 - Addition of error handling for API failures
 - Update of AI configuration UI to support provider selection and API key input
 - Update of AI models to match each provider's available models
+- Implementation of typing and reading delay simulation for more human-like interactions
+- Addition of WhatsApp typing indicators during response generation
 
 ## Current Focus
 

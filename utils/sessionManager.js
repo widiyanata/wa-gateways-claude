@@ -268,14 +268,43 @@ exports.createSessionManager = (io) => {
     }
   };
 
-  const sendMessage = async (sessionId, to, message) => {
+  // Update sendMessage function in sessionManager.js
+  const { calculateTypingDelay, delay } = require("./helpers");
+
+  const sendMessage = async (sessionId, to, message, options = {}) => {
     try {
       const sock = getSession(sessionId);
 
-      // Format nomor telepon
+      // Format phone number
       const formattedNumber = to.includes("@") ? to : `${to.replace(/[^\d]/g, "")}@s.whatsapp.net`;
 
+      // Get AI config for typing simulation settings
+      let typingDelay = 0;
+
+      if (!options.skipTypingSimulation) {
+        try {
+          const aiConfig = await aiManager.getAIConfig(sessionId);
+          if (aiConfig.simulateTyping) {
+            // Start typing indicator
+            await sendTypingIndicator(sessionId, formattedNumber, true);
+
+            // Calculate and apply typing delay
+            typingDelay = calculateTypingDelay(message, aiConfig);
+            await delay(typingDelay);
+          }
+        } catch (error) {
+          console.error(`Error in typing simulation: ${error.message}`);
+          // Continue with sending even if typing simulation fails
+        }
+      }
+
+      // Send the actual message
       const result = await sock.sendMessage(formattedNumber, { text: message });
+
+      // Stop typing indicator
+      if (typingDelay > 0) {
+        await sendTypingIndicator(sessionId, formattedNumber, false);
+      }
 
       // Save to message history
       const messageData = {
@@ -287,6 +316,8 @@ exports.createSessionManager = (io) => {
         status: "sent",
         timestamp: result.messageTimestamp,
         whatsappTimestamp: result.messageTimestamp,
+        typingSimulated: typingDelay > 0,
+        typingDuration: typingDelay,
       };
 
       await saveMessageToHistory(sessionId, messageData);
@@ -1255,6 +1286,28 @@ exports.createSessionManager = (io) => {
    */
   const processMessageWithAI = async (sessionId, contactId, message) => {
     return await aiManager.processMessage(sessionId, contactId, message);
+  };
+
+  /**
+   * Send typing indicator to a contact
+   * @param {string} sessionId - The session ID
+   * @param {string} to - The recipient's phone number
+   * @param {boolean} isTyping - Whether to show typing (true) or stop typing (false)
+   * @returns {Promise<void>}
+   */
+  const sendTypingIndicator = async (sessionId, to, isTyping) => {
+    try {
+      const sock = getSession(sessionId);
+
+      // Format phone number
+      const formattedNumber = to.includes("@") ? to : `${to.replace(/[^\d]/g, "")}@s.whatsapp.net`;
+
+      // Send presence update
+      await sock.sendPresenceUpdate(isTyping ? "composing" : "paused", formattedNumber);
+    } catch (error) {
+      console.error(`Failed to send typing indicator: ${error.message}`);
+      // Don't throw error to prevent interrupting the message flow
+    }
   };
 
   return {

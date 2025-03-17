@@ -1207,6 +1207,89 @@
                             </div>
                           </div>
 
+                          <!-- Add to the AI configuration form in views/session-detail.ejs -->
+                          <div class="mb-3 form-check">
+                            <input
+                              type="checkbox"
+                              class="form-check-input"
+                              id="ai-simulate-typing"
+                              v-model="aiConfig.simulateTyping"
+                            />
+                            <label class="form-check-label" for="ai-simulate-typing">
+                              Simulate typing and reading delays
+                            </label>
+                            <div class="form-text">
+                              Makes responses appear more human-like by adding typing indicators and
+                              delays.
+                            </div>
+                          </div>
+
+                          <!-- Add typing simulation settings (shown only when simulateTyping is enabled) -->
+                          <div v-if="aiConfig.simulateTyping" class="mb-3 border-start ps-3">
+                            <div class="row mb-3">
+                              <div class="col-md-6">
+                                <label for="ai-typing-delay" class="form-label"
+                                  >Typing Speed (ms/character)</label
+                                >
+                                <input
+                                  type="number"
+                                  class="form-control"
+                                  id="ai-typing-delay"
+                                  v-model="aiConfig.typingDelay"
+                                  min="10"
+                                  max="200"
+                                />
+                                <div class="form-text">
+                                  <small>Lower = faster typing (10-200ms)</small>
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <label for="ai-reading-delay" class="form-label"
+                                  >Reading Speed (ms/word)</label
+                                >
+                                <input
+                                  type="number"
+                                  class="form-control"
+                                  id="ai-reading-delay"
+                                  v-model="aiConfig.readingDelay"
+                                  min="50"
+                                  max="500"
+                                />
+                                <div class="form-text">
+                                  <small>Lower = faster reading (50-500ms)</small>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row mb-3">
+                              <div class="col-md-6">
+                                <label for="ai-min-delay" class="form-label"
+                                  >Minimum Delay (ms)</label
+                                >
+                                <input
+                                  type="number"
+                                  class="form-control"
+                                  id="ai-min-delay"
+                                  v-model="aiConfig.minDelay"
+                                  min="0"
+                                  max="5000"
+                                />
+                              </div>
+                              <div class="col-md-6">
+                                <label for="ai-max-delay" class="form-label"
+                                  >Maximum Delay (ms)</label
+                                >
+                                <input
+                                  type="number"
+                                  class="form-control"
+                                  id="ai-max-delay"
+                                  v-model="aiConfig.maxDelay"
+                                  min="1000"
+                                  max="30000"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
                           <div class="d-flex justify-content-between">
                             <button type="submit" class="btn btn-primary">
                               <i class="bi bi-save"></i> Save Configuration

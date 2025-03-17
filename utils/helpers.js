@@ -273,4 +273,54 @@ function validateExcelData(excelData) {
   };
 }
 
-module.exports = { validateExcelData, getRandomTime, formatDateToYYYYMMDD, renderTemplate };
+/**
+ * Calculate typing delay based on message length and typing speed
+ * @param {string} message - The message to calculate typing time for
+ * @param {Object} config - The AI configuration with typing settings
+ * @returns {number} Delay in milliseconds
+ */
+const calculateTypingDelay = (message, config) => {
+  if (!config.simulateTyping) return 0;
+
+  const characterCount = message.length;
+  const calculatedDelay = characterCount * config.typingDelay;
+
+  // Apply min/max bounds
+  return Math.min(Math.max(calculatedDelay, config.minDelay || 1000), config.maxDelay || 10000);
+};
+
+/**
+ * Calculate reading delay based on message length and reading speed
+ * @param {string} message - The message to calculate reading time for
+ * @param {Object} config - The AI configuration with reading settings
+ * @returns {number} Delay in milliseconds
+ */
+const calculateReadingDelay = (message, config) => {
+  if (!config.simulateTyping) return 0;
+
+  // Estimate word count (split by spaces and count non-empty segments)
+  const wordCount = message.split(/\s+/).filter(Boolean).length;
+  const calculatedDelay = wordCount * config.readingDelay;
+
+  // Apply min/max bounds
+  return Math.min(Math.max(calculatedDelay, config.minDelay || 1000), config.maxDelay || 10000);
+};
+
+/**
+ * Create a promise that resolves after the specified delay
+ * @param {number} ms - Delay in milliseconds
+ * @returns {Promise} Promise that resolves after the delay
+ */
+const delay = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+module.exports = {
+  validateExcelData,
+  getRandomTime,
+  formatDateToYYYYMMDD,
+  renderTemplate,
+  calculateTypingDelay,
+  calculateReadingDelay,
+  delay,
+};

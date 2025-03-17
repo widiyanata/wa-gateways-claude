@@ -36,16 +36,23 @@ exports.createAIManager = (io) => {
     // Create default configuration
     const defaultConfig = {
       enabled: false,
-      provider: AI_PROVIDERS.OPENAI, // Default provider
-      openaiApiKey: "", // OpenAI API key
-      deepseekApiKey: "", // DeepSeek API key
-      instructions:
-        "You are a helpful assistant. Respond to messages in a friendly and concise manner.",
-      model: "gpt-3.5-turbo", // Default model for OpenAI
+      provider: AI_PROVIDERS.OPENAI,
+      openaiApiKey: "",
+      deepseekApiKey: "",
+      instructions: "You are a helpful assistant...",
+      model: "gpt-3.5-turbo",
       maxTokens: DEFAULT_MAX_TOKENS,
       temperature: 0.7,
       contextLimit: DEFAULT_CONTEXT_LIMIT,
       autoReply: false,
+
+      // New typing and reading simulation settings
+      simulateTyping: true,
+      typingDelay: 50, // ms per character
+      readingDelay: 200, // ms per word
+      minDelay: 1000, // minimum delay in ms
+      maxDelay: 10000, // maximum delay in ms
+
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -234,6 +241,9 @@ exports.createAIManager = (io) => {
    * @param {string} message - The message text
    * @returns {Promise<Object>} The AI response
    */
+
+  const helpers = require("./helpers");
+
   const processMessage = async (sessionId, contactId, message) => {
     try {
       // Get AI configuration
@@ -253,6 +263,12 @@ exports.createAIManager = (io) => {
         content: message,
       });
 
+      // Simulate reading time if enabled
+      if (config.simulateTyping) {
+        const readingDelay = helpers.calculateReadingDelay(message, config);
+        await helpers.delay(readingDelay);
+      }
+
       // Get conversation history for context
       const conversationHistory = await getConversationHistory(
         sessionId,
@@ -263,7 +279,7 @@ exports.createAIManager = (io) => {
       // Prepare messages for AI
       const messages = [{ role: "system", content: config.instructions }, ...conversationHistory];
 
-      // Generate AI response (placeholder for actual API call)
+      // Generate AI response
       const aiResponse = await generateAIResponse(messages, config);
 
       // Add AI response to conversation history

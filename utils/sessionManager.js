@@ -7,6 +7,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const QRCode = require("qrcode");
 const pino = require("pino");
+const { createAIManager } = require("./aiManager");
 
 const logger = pino({ level: "silent" });
 const SESSIONS_DIR = path.join(process.cwd(), "sessions");
@@ -14,6 +15,7 @@ const SESSIONS_DIR = path.join(process.cwd(), "sessions");
 exports.createSessionManager = (io) => {
   const sessions = new Map();
   const qrCodes = new Map();
+  const aiManager = createAIManager(io);
 
   const createSession = async (sessionId, newSession = true) => {
     // Validasi nama sesi
@@ -161,6 +163,28 @@ exports.createSessionManager = (io) => {
 
               // Emit event for any listeners
               io.emit(`${sessionId}.message.received`, incomingMessage);
+
+              // Process message with AI if it's a text message
+              if (content && (mediaType === null || mediaType === undefined)) {
+                try {
+                  const aiResult = await aiManager.processMessage(sessionId, sender, content);
+
+                  // If AI processing was successful and auto-reply is enabled, send the response
+                  if (aiResult.processed && aiResult.autoReply && aiResult.response) {
+                    await sendMessage(sessionId, sender, aiResult.response.content);
+
+                    // Emit AI response event
+                    io.emit(`${sessionId}.ai.auto.response`, {
+                      sessionId,
+                      contactId: sender,
+                      message: content,
+                      response: aiResult.response,
+                    });
+                  }
+                } catch (aiError) {
+                  console.error(`Error processing message with AI: ${aiError.message}`);
+                }
+              }
             }
           }
         }
@@ -1172,6 +1196,67 @@ exports.createSessionManager = (io) => {
     }
   };
 
+  /**
+   * Get AI configuration for a session
+   * @param {string} sessionId - The session ID
+   * @returns {Promise<Object>} The AI configuration
+   */
+  const getAIConfig = async (sessionId) => {
+    return await aiManager.getAIConfig(sessionId);
+  };
+
+  /**
+   * Update AI configuration for a session
+   * @param {string} sessionId - The session ID
+   * @param {Object} configUpdates - The configuration updates
+   * @returns {Promise<Object>} The updated AI configuration
+   */
+  const updateAIConfig = async (sessionId, configUpdates) => {
+    return await aiManager.updateAIConfig(sessionId, configUpdates);
+  };
+
+  /**
+   * Get conversation history for a contact
+   * @param {string} sessionId - The session ID
+   * @param {string} contactId - The contact ID (phone number)
+   * @param {number} limit - Maximum number of messages to retrieve
+   * @returns {Promise<Array>} The conversation history
+   */
+  const getConversationHistory = async (sessionId, contactId, limit) => {
+    return await aiManager.getConversationHistory(sessionId, contactId, limit);
+  };
+
+  /**
+   * Clear conversation history for a contact
+   * @param {string} sessionId - The session ID
+   * @param {string} contactId - The contact ID (phone number)
+   * @returns {Promise<boolean>} Success status
+   */
+  const clearConversationHistory = async (sessionId, contactId) => {
+    return await aiManager.clearConversationHistory(sessionId, contactId);
+  };
+
+  /**
+   * Test AI configuration with a sample message
+   * @param {string} sessionId - The session ID
+   * @param {string} testMessage - The test message
+   * @returns {Promise<Object>} The test result
+   */
+  const testAIConfig = async (sessionId, testMessage) => {
+    return await aiManager.testAIConfig(sessionId, testMessage);
+  };
+
+  /**
+   * Process a message with AI and get a response
+   * @param {string} sessionId - The session ID
+   * @param {string} contactId - The contact ID (phone number)
+   * @param {string} message - The message text
+   * @returns {Promise<Object>} The AI processing result
+   */
+  const processMessageWithAI = async (sessionId, contactId, message) => {
+    return await aiManager.processMessage(sessionId, contactId, message);
+  };
+
   return {
     createSession,
     getSession,
@@ -1199,5 +1284,12 @@ exports.createSessionManager = (io) => {
     deleteMessageHistory,
     getMessageStats,
     getMessageById,
+    // AI features
+    getAIConfig,
+    updateAIConfig,
+    getConversationHistory,
+    clearConversationHistory,
+    testAIConfig,
+    processMessageWithAI,
   };
 };

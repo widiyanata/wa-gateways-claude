@@ -3,3 +3,5 @@
 /sessions
 uploads
 dist
+views/session-detail copy.ejs
+views/sessionDetail.ejs

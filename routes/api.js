@@ -384,4 +384,97 @@ router.delete("/:sessionId/messages", async (req, res) => {
   }
 });
 
+// AI Routes
+
+// Get AI configuration
+router.get("/:sessionId/ai/config", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const config = await req.sessionManager.getAIConfig(sessionId);
+    res.json({ success: true, data: config });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update AI configuration
+router.put("/:sessionId/ai/config", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const configUpdates = req.body;
+
+    const updatedConfig = await req.sessionManager.updateAIConfig(sessionId, configUpdates);
+    res.json({ success: true, data: updatedConfig });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get conversation history
+router.get("/:sessionId/ai/conversation/:contactId", async (req, res) => {
+  try {
+    const { sessionId, contactId } = req.params;
+    const { limit } = req.query;
+
+    const history = await req.sessionManager.getConversationHistory(
+      sessionId,
+      contactId,
+      limit ? parseInt(limit) : undefined
+    );
+
+    res.json({ success: true, data: history });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Clear conversation history
+router.delete("/:sessionId/ai/conversation/:contactId", async (req, res) => {
+  try {
+    const { sessionId, contactId } = req.params;
+
+    await req.sessionManager.clearConversationHistory(sessionId, contactId);
+    res.json({ success: true, message: "Conversation history cleared" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Test AI configuration
+router.post("/:sessionId/ai/test", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ success: false, error: "Test message is required" });
+    }
+
+    const result = await req.sessionManager.testAIConfig(sessionId, message);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Process message with AI
+router.post("/:sessionId/ai/process", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { contactId, message } = req.body;
+
+    if (!contactId || !message) {
+      return res.status(400).json({
+        success: false,
+        error: "Contact ID and message are required",
+      });
+    }
+
+    const result = await req.sessionManager.processMessageWithAI(sessionId, contactId, message);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

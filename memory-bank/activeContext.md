@@ -2,87 +2,88 @@
 
 ## Current Status
 
-The WhatsApp Gateway project is currently in a functional state with core features implemented. The application provides a web interface and API for managing WhatsApp sessions, sending messages, and scheduling future messages. The system uses the Baileys library to interact with WhatsApp Web and provides a user-friendly interface for non-technical users.
+The WhatsApp Gateway project is currently in a functional state with core features implemented and the AI Integration MVP in place. The application provides a web interface and API for managing WhatsApp sessions, sending messages, scheduling future messages, and now includes the foundation for AI-powered automated responses. The system uses the Baileys library to interact with WhatsApp Web and provides a user-friendly interface for non-technical users.
 
 ## Recent Changes
 
-- Initial project setup with Express.js and EJS templates
-- Implementation of the Session Manager for WhatsApp session handling
-- Development of API endpoints for session and message management
-- Creation of web interface for session creation and management
-- Implementation of bulk messaging with templates
-- Addition of message scheduling functionality
+- Implementation of AI service integration module
+- Development of conversation context management system
+- Creation of AI configuration UI in session detail view
+- Addition of API endpoints for AI functionality
+- Integration of AI processing with incoming messages
 
 ## Current Focus
 
-The current focus is on enhancing the WhatsApp Gateway with AI capabilities to enable automated responses to incoming messages. This involves:
+The current focus is on enhancing the AI integration with a real external AI service and improving the user experience. This involves:
 
-1. **AI Integration Planning**: Determining the best approach for integrating AI capabilities into the existing architecture.
-2. **AI Model Selection**: Evaluating different AI models or services that can be used for generating responses.
-3. **User Interface Updates**: Planning updates to the user interface to support AI configuration and management.
-4. **API Enhancements**: Designing new API endpoints for AI-related functionality.
+1. **External AI Service Integration**: Connecting to a real AI service like OpenAI or Claude to generate responses.
+2. **API Key Management**: Implementing secure storage and management of API keys for AI services.
+3. **Advanced Context Management**: Improving the conversation context management for better AI responses.
+4. **User Experience Enhancements**: Adding feedback mechanisms and fallback options for AI responses.
 
 ## Active Decisions
 
-### AI Integration Approach
-- **Decision Needed**: Whether to use an external AI service (e.g., OpenAI, Dialogflow) or implement a simpler rule-based system.
-- **Considerations**: Cost, complexity, response quality, and integration effort.
-- **Current Thinking**: An external AI service would provide better quality responses but at a higher cost and complexity.
+### External AI Service Selection
+- **Decision Needed**: Which external AI service to integrate with (OpenAI, Claude, etc.).
+- **Considerations**: Cost, API availability, response quality, and integration complexity.
+- **Current Thinking**: OpenAI's API is well-documented and widely used, making it a good initial choice, with Claude as a potential alternative.
 
-### AI Configuration
-- **Decision Needed**: How users will configure the AI behavior (e.g., instructions, templates, examples).
-- **Considerations**: User experience, flexibility, and complexity.
-- **Current Thinking**: A simple form-based approach with text areas for instructions and example conversations.
+### API Key Management
+- **Decision Needed**: How to securely store and manage API keys for AI services.
+- **Considerations**: Security, user experience, and flexibility.
+- **Current Thinking**: Store API keys in environment variables or a secure configuration file, with a UI for users to enter their own keys.
 
-### Context Management
-- **Decision Needed**: How to store and manage conversation context for AI responses.
-- **Considerations**: Storage requirements, performance impact, and context window limitations.
-- **Current Thinking**: Store recent conversation history in memory with configurable limits, with optional persistence to disk.
+### Advanced Context Management
+- **Decision Needed**: How to improve conversation context management for better AI responses.
+- **Considerations**: Memory usage, performance, and context window limitations.
+- **Current Thinking**: Implement a more sophisticated context window that prioritizes recent messages and important context, with configurable retention policies.
 
 ## Next Steps
 
-1. **Research AI Integration Options**:
-   - Evaluate available AI services and their APIs
-   - Assess costs and limitations
-   - Determine integration requirements
+1. **Integrate with External AI Service**:
+   - Select an AI service provider (OpenAI, Claude, etc.)
+   - Implement API client for the selected service
+   - Add API key configuration options
 
-2. **Design AI Configuration Interface**:
-   - Create mockups for AI settings page
-   - Define configuration parameters
-   - Plan user experience flow
+2. **Enhance AI Response Generation**:
+   - Improve prompt engineering for better responses
+   - Implement response filtering and safety measures
+   - Add support for different response formats (text, markdown, etc.)
 
-3. **Implement Basic AI Integration**:
-   - Create new module for AI service integration
-   - Develop API endpoints for AI configuration
-   - Implement message processing logic
+3. **Implement Feedback Mechanisms**:
+   - Add UI for rating AI responses
+   - Collect and store feedback data
+   - Use feedback to improve AI configuration
 
-4. **Enhance Session Manager**:
-   - Add support for AI-powered responses
-   - Implement context management
-   - Create hooks for incoming message processing
+4. **Add Fallback Mechanisms**:
+   - Implement error handling for AI service failures
+   - Create fallback responses for when AI is unavailable
+   - Add retry logic for failed requests
 
-5. **Update User Interface**:
-   - Add AI configuration page
-   - Enhance session detail view to show AI status
-   - Provide feedback on AI response quality
+5. **Improve Documentation**:
+   - Create user guide for AI configuration
+   - Document best practices for prompt engineering
+   - Provide examples of effective AI instructions
 
-6. **Testing and Refinement**:
-   - Test AI responses with various scenarios
-   - Gather feedback on response quality
-   - Refine AI configuration options
+6. **Performance Optimization**:
+   - Optimize context management for memory usage
+   - Implement caching for frequent requests
+   - Add request throttling to manage API costs
 
 ## Open Questions
 
-1. How should the system handle AI service outages or failures?
-2. What metrics should be tracked to evaluate AI response quality?
-3. Should users be able to review and approve AI responses before sending?
-4. How can the system handle different languages and cultural contexts?
-5. What privacy considerations need to be addressed when processing messages with AI?
+1. Should we support multiple AI service providers or focus on one?
+2. How can we implement a cost management system to prevent excessive API usage?
+3. Should we add a feature for users to review and approve AI responses before sending?
+4. How can we best handle different languages and cultural contexts in AI responses?
+5. What additional privacy measures are needed when processing messages with external AI services?
+6. Should we implement a local fallback AI option for when external services are unavailable?
 
 ## Current Challenges
 
 1. **WhatsApp API Limitations**: The unofficial nature of the Baileys library means that WhatsApp updates could break functionality.
 2. **Scalability**: The current file-based storage approach may not scale well with many sessions or messages.
-3. **AI Integration Complexity**: Integrating AI capabilities while maintaining a simple user experience is challenging.
-4. **Context Management**: Efficiently managing conversation context without excessive resource usage.
-5. **User Education**: Helping users understand how to effectively configure AI behavior.
+3. **AI Service Reliability**: External AI services may have downtime or rate limits that affect functionality.
+4. **Cost Management**: AI API usage costs can accumulate quickly with high message volume.
+5. **Context Management**: Efficiently managing conversation context without excessive resource usage.
+6. **User Education**: Helping users understand how to effectively configure AI behavior for optimal results.

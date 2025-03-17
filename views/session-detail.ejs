@@ -175,6 +175,18 @@
                   <i class="bi bi-gear"></i> Session Settings
                 </button>
               </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="ai-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#ai"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-robot"></i> AI Assistant
+                </button>
+              </li>
             </ul>
 
             <div
@@ -1018,6 +1030,243 @@
                   </div>
                 </div>
               </div>
+
+              <!-- AI Assistant Tab -->
+              <div class="tab-pane fade" id="ai" role="tabpanel">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card mb-4">
+                      <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title m-0">AI Assistant Configuration</h5>
+                        <div class="form-check form-switch">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="ai-enabled"
+                            v-model="aiConfig.enabled"
+                            @change="updateAIConfig"
+                          />
+                          <label class="form-check-label" for="ai-enabled">
+                            {{ aiConfig.enabled ? "Enabled" : "Disabled" }}
+                          </label>
+                        </div>
+                      </div>
+                      <div class="card-body">
+                        <form @submit.prevent="updateAIConfig">
+                          <div class="mb-3">
+                            <label for="ai-instructions" class="form-label">Instructions</label>
+                            <textarea
+                              class="form-control"
+                              id="ai-instructions"
+                              v-model="aiConfig.instructions"
+                              rows="4"
+                              placeholder="Instructions for the AI assistant"
+                            ></textarea>
+                            <div class="form-text">
+                              Provide instructions for how the AI should respond to messages.
+                            </div>
+                          </div>
+
+                          <div class="mb-3">
+                            <label for="ai-model" class="form-label">AI Model</label>
+                            <select class="form-select" id="ai-model" v-model="aiConfig.model">
+                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                              <option value="gpt-4">GPT-4</option>
+                              <option value="claude-3-haiku">Claude 3 Haiku</option>
+                              <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                              <option value="claude-3-opus">Claude 3 Opus</option>
+                            </select>
+                          </div>
+
+                          <div class="row mb-3">
+                            <div class="col-md-6">
+                              <label for="ai-max-tokens" class="form-label">Max Tokens</label>
+                              <input
+                                type="number"
+                                class="form-control"
+                                id="ai-max-tokens"
+                                v-model="aiConfig.maxTokens"
+                                min="50"
+                                max="4000"
+                              />
+                            </div>
+                            <div class="col-md-6">
+                              <label for="ai-temperature" class="form-label">Temperature</label>
+                              <input
+                                type="range"
+                                class="form-range"
+                                id="ai-temperature"
+                                v-model="aiConfig.temperature"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                              />
+                              <div class="d-flex justify-content-between">
+                                <small>Precise (0.0)</small>
+                                <small>{{ aiConfig.temperature }}</small>
+                                <small>Creative (1.0)</small>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="mb-3">
+                            <label for="ai-context-limit" class="form-label">Context Limit</label>
+                            <input
+                              type="number"
+                              class="form-control"
+                              id="ai-context-limit"
+                              v-model="aiConfig.contextLimit"
+                              min="1"
+                              max="50"
+                            />
+                            <div class="form-text">
+                              Number of previous messages to include for context.
+                            </div>
+                          </div>
+
+                          <div class="mb-3 form-check">
+                            <input
+                              type="checkbox"
+                              class="form-check-input"
+                              id="ai-auto-reply"
+                              v-model="aiConfig.autoReply"
+                            />
+                            <label class="form-check-label" for="ai-auto-reply">
+                              Auto-reply to messages
+                            </label>
+                            <div class="form-text">
+                              When enabled, the AI will automatically respond to incoming messages.
+                            </div>
+                          </div>
+
+                          <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                              <i class="bi bi-save"></i> Save Configuration
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-outline-secondary"
+                              @click="resetAIConfig"
+                            >
+                              <i class="bi bi-arrow-counterclockwise"></i> Reset
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="card mb-4">
+                      <div class="card-header">
+                        <h5 class="card-title m-0">Test AI Assistant</h5>
+                      </div>
+                      <div class="card-body">
+                        <form @submit.prevent="testAI">
+                          <div class="mb-3">
+                            <label for="test-message" class="form-label">Test Message</label>
+                            <textarea
+                              class="form-control"
+                              id="test-message"
+                              v-model="testMessage"
+                              rows="3"
+                              placeholder="Enter a message to test the AI assistant"
+                              required
+                            ></textarea>
+                          </div>
+                          <button
+                            type="submit"
+                            class="btn btn-primary"
+                            :disabled="!aiConfig.enabled"
+                          >
+                            <i class="bi bi-send"></i> Test
+                          </button>
+                        </form>
+
+                        <div class="mt-4" v-if="testResult">
+                          <h6>AI Response:</h6>
+                          <div class="p-3 bg-light rounded">
+                            <p class="mb-0">{{ testResult.content }}</p>
+                          </div>
+                          <div class="mt-2 text-muted small">
+                            <span>Model: {{ testResult.model }}</span>
+                            <span class="ms-3"
+                              >Created: {{ new Date(testResult.created).toLocaleString() }}</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card">
+                      <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title m-0">Conversation History</h5>
+                        <div>
+                          <button
+                            class="btn btn-sm btn-outline-secondary"
+                            @click="loadConversations"
+                          >
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                          </button>
+                          <button
+                            class="btn btn-sm btn-outline-danger ms-2"
+                            @click="clearConversationPrompt"
+                          >
+                            <i class="bi bi-trash"></i> Clear
+                          </button>
+                        </div>
+                      </div>
+                      <div class="card-body">
+                        <div class="mb-3">
+                          <label for="contact-select" class="form-label">Select Contact</label>
+                          <select
+                            class="form-select"
+                            id="contact-select"
+                            v-model="selectedContact"
+                            @change="loadConversationHistory"
+                          >
+                            <option value="">Select a contact</option>
+                            <option v-for="contact in recentContacts" :value="contact.id">
+                              {{ contact.name || contact.id.replace("@s.whatsapp.net", "") }}
+                            </option>
+                          </select>
+                        </div>
+
+                        <div
+                          class="conversation-history"
+                          style="max-height: 300px; overflow-y: auto"
+                        >
+                          <div
+                            v-if="!selectedContact || conversationHistory.length === 0"
+                            class="text-center py-4 text-muted"
+                          >
+                            <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
+                            <p class="mt-2">No conversation history available.</p>
+                          </div>
+
+                          <div
+                            v-for="(msg, index) in conversationHistory"
+                            :key="index"
+                            class="mb-3"
+                          >
+                            <div
+                              :class="['p-2 rounded', msg.role === 'user' ? 'bg-light' : 'bg-primary text-white']"
+                            >
+                              <div class="small mb-1 text-opacity-75">
+                                {{ msg.role === "user" ? "User" : "AI Assistant" }}
+                              </div>
+                              <div>{{ msg.content }}</div>
+                              <div class="small mt-1 text-opacity-75">
+                                {{ new Date(msg.timestamp).toLocaleString() }}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1084,6 +1333,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
       const { createApp, ref, onMounted, computed, watch } = Vue;
 
@@ -1102,6 +1352,21 @@
           const statusMessage = ref("");
           const messageLogs = ref([]);
           const scheduledMessages = ref([]);
+          const aiConfig = ref({
+            enabled: false,
+            instructions:
+              "You are a helpful assistant. Respond to messages in a friendly and concise manner.",
+            model: "gpt-3.5-turbo",
+            maxTokens: 150,
+            temperature: 0.7,
+            contextLimit: 10,
+            autoReply: false,
+          });
+          const testMessage = ref("");
+          const testResult = ref(null);
+          const selectedContact = ref("");
+          const conversationHistory = ref([]);
+          const recentContacts = ref([]);
 
           // Form data
           const messageForm = ref({
@@ -1176,6 +1441,149 @@
           const showPreview = computed(() => {
             return excelData.value.length > 0 && template.value.trim() !== "";
           });
+
+          // Load AI configuration
+          const loadAIConfig = async () => {
+            try {
+              const response = await axios.get(`/api/${sessionId}/ai/config`);
+              if (response.data.success) {
+                aiConfig.value = response.data.data;
+              }
+            } catch (error) {
+              console.error("Error loading AI config:", error);
+              showStatusModal("Error", `Failed to load AI configuration: ${error.message}`);
+            }
+          };
+
+          // Update AI configuration
+          const updateAIConfig = async () => {
+            try {
+              const response = await axios.put(`/api/${sessionId}/ai/config`, aiConfig.value);
+              if (response.data.success) {
+                showStatusModal("Success", "AI configuration updated successfully");
+              }
+            } catch (error) {
+              console.error("Error updating AI config:", error);
+              showStatusModal("Error", `Failed to update AI configuration: ${error.message}`);
+            }
+          };
+
+          // Reset AI configuration to defaults
+          const resetAIConfig = async () => {
+            aiConfig.value = {
+              enabled: false,
+              instructions:
+                "You are a helpful assistant. Respond to messages in a friendly and concise manner.",
+              model: "gpt-3.5-turbo",
+              maxTokens: 150,
+              temperature: 0.7,
+              contextLimit: 10,
+              autoReply: false,
+            };
+          };
+
+          // Test AI with a message
+          const testAI = async () => {
+            if (!testMessage.value) return;
+
+            try {
+              const response = await axios.post(`/api/${sessionId}/ai/test`, {
+                message: testMessage.value,
+              });
+
+              if (response.data.success) {
+                testResult.value = response.data.data.response;
+              }
+            } catch (error) {
+              console.error("Error testing AI:", error);
+              showStatusModal("Error", `Failed to test AI: ${error.message}`);
+            }
+          };
+
+          // Load recent contacts (from message history)
+          const loadRecentContacts = async () => {
+            try {
+              const response = await axios.get(`/api/${sessionId}/messages`, {
+                params: { limit: 100 },
+              });
+
+              if (response.data && response.data.messages) {
+                // Extract unique contacts from messages
+                const contacts = new Map();
+
+                response.data.messages.forEach((msg) => {
+                  const contactId = msg.from || msg.to;
+                  if (contactId && !contacts.has(contactId)) {
+                    contacts.set(contactId, {
+                      id: contactId,
+                      name: contactId.replace("@s.whatsapp.net", ""),
+                    });
+                  }
+                });
+
+                recentContacts.value = Array.from(contacts.values());
+              }
+            } catch (error) {
+              console.error("Error loading contacts:", error);
+            }
+          };
+
+          // Load conversation history for a contact
+          const loadConversationHistory = async () => {
+            if (!selectedContact.value) {
+              conversationHistory.value = [];
+              return;
+            }
+
+            try {
+              const response = await axios.get(
+                `/api/${sessionId}/ai/conversation/${selectedContact.value}`
+              );
+
+              if (response.data.success) {
+                conversationHistory.value = response.data.data;
+              }
+            } catch (error) {
+              console.error("Error loading conversation history:", error);
+              conversationHistory.value = [];
+            }
+          };
+
+          // Clear conversation history for a contact
+          const clearConversationPrompt = async () => {
+            if (!selectedContact.value) return;
+
+            if (
+              confirm(
+                `Are you sure you want to clear the conversation history with ${selectedContact.value.replace(
+                  "@s.whatsapp.net",
+                  ""
+                )}?`
+              )
+            ) {
+              try {
+                const response = await axios.delete(
+                  `/api/${sessionId}/ai/conversation/${selectedContact.value}`
+                );
+
+                if (response.data.success) {
+                  conversationHistory.value = [];
+                  showStatusModal("Success", "Conversation history cleared successfully");
+                }
+              } catch (error) {
+                console.error("Error clearing conversation history:", error);
+                showStatusModal("Error", `Failed to clear conversation history: ${error.message}`);
+              }
+            }
+          };
+
+          // Load conversations (refresh contacts and history)
+          const loadConversations = async () => {
+            await loadRecentContacts();
+            if (selectedContact.value) {
+              await loadConversationHistory();
+            }
+          };
 
           // Methods
           function excelToJson(file) {
@@ -1958,6 +2366,8 @@
             // Load initial data
             loadSessionInfo();
             loadScheduledMessages();
+            loadAIConfig();
+            loadRecentContacts();
 
             // Set up socket listeners
             socket.on(`qr.${sessionId}`, (data) => {
@@ -1990,6 +2400,12 @@
             statusMessage,
             messageLogs,
             scheduledMessages,
+            aiConfig,
+            testMessage,
+            testResult,
+            selectedContact,
+            conversationHistory,
+            recentContacts,
             messageForm,
             mediaForm,
             scheduleForm,
@@ -2014,6 +2430,15 @@
             clearLogs,
             formatDateTime,
             capitalizeFirstLetter,
+
+            // AI methods
+            loadAIConfig,
+            updateAIConfig,
+            resetAIConfig,
+            testAI,
+            loadConversationHistory,
+            clearConversationPrompt,
+            loadConversations,
 
             // bulk message
             excelData,

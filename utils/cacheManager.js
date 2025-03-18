@@ -8,7 +8,8 @@ const path = require("path");
 const crypto = require("crypto");
 
 // Constants
-const CACHE_DIR = path.join(process.cwd(), "cache");
+// const CACHE_DIR = path.join(process.cwd(), "cache");
+const CACHE_DIR = path.join('/tmp', "cache");
 const DEFAULT_MEMORY_CACHE_SIZE = 100; // Number of items to keep in memory cache
 const DEFAULT_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 

@@ -371,6 +371,7 @@ exports.createAIManager = (io) => {
 
       // Cache the response if caching is enabled
       if (config.caching && config.caching.enabled && !response.error) {
+        console.log(`Caching response for key: ${cacheKey}`);
         await cacheManager.setCacheItem(cacheKey, response, config.caching);
       }
 

@@ -42,6 +42,12 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/index", (req, res) => {
+  res.render("index", {
+    title: "Index WhatsApp Gateway Dashboard",
+  });
+});
+
 app.get("/create-session", (req, res) => {
   res.render("create-session", {
     title: "Create New Session",
@@ -52,6 +58,14 @@ app.get("/session/:id", (req, res) => {
   const sessionId = req.params.id;
   res.render("session-detail", {
     title: `Session: ${sessionId}`,
+    sessionId,
+  });
+});
+
+app.get("/session/:id/bulk-message", (req, res) => {
+  const sessionId = req.params.id;
+  res.render("bulk-message", {
+    title: `Bulk Message: ${sessionId}`,
     sessionId,
   });
 });

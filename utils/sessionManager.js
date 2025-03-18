@@ -10,7 +10,8 @@ const pino = require("pino");
 const { createAIManager } = require("./aiManager");
 
 const logger = pino({ level: "silent" });
-const SESSIONS_DIR = path.join(process.cwd(), "sessions");
+// const SESSIONS_DIR = path.join(process.cwd(), "sessions");
+const SESSIONS_DIR = path.join('/tmp', 'sessions');
 
 exports.createSessionManager = (io) => {
   const sessions = new Map();

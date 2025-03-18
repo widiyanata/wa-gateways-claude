@@ -5,3 +5,5 @@ uploads
 dist
 views/session-detail copy.ejs
 views/sessionDetail.ejs
+views/bulk-message.ejs
+views/index.ejs

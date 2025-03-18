@@ -457,6 +457,27 @@ router.post("/:sessionId/ai/test", async (req, res) => {
   }
 });
 
+// Clear AI response cache
+router.post("/:sessionId/ai/cache/clear", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const result = await req.sessionManager.clearCache(sessionId);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get AI cache statistics
+router.get("/:sessionId/ai/cache/stats", async (req, res) => {
+  try {
+    const stats = await req.sessionManager.getCacheStats();
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Process message with AI
 router.post("/:sessionId/ai/process", async (req, res) => {
   try {

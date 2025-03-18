@@ -1344,5 +1344,8 @@ exports.createSessionManager = (io) => {
     clearConversationHistory,
     testAIConfig,
     processMessageWithAI,
+    // Cache features
+    clearCache: (sessionId) => aiManager.clearCache(sessionId),
+    getCacheStats: () => aiManager.getCacheStats(),
   };
 };

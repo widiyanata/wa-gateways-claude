@@ -1207,6 +1207,122 @@
                             </div>
                           </div>
 
+                          <h6 class="mt-4 mb-3 border-bottom pb-2">Performance Optimization</h6>
+                          <!-- Caching Settings -->
+                          <div class="mb-3 form-check">
+                            <input
+                              type="checkbox"
+                              class="form-check-input"
+                              id="ai-caching-enabled"
+                              v-model="caching.enabled"
+                            />
+                            <label class="form-check-label" for="ai-caching-enabled">
+                              Enable response caching
+                            </label>
+                            <div class="form-text">
+                              Cache AI responses to reduce API costs and improve response times.
+                            </div>
+                          </div>
+
+                          <div v-if="caching && caching.enabled" class="mb-3 border-start ps-3">
+                            <div class="mb-3 form-check">
+                              <input
+                                type="checkbox"
+                                class="form-check-input"
+                                id="ai-memory-cache"
+                                v-model="caching.useMemoryCache"
+                              />
+                              <label class="form-check-label" for="ai-memory-cache">
+                                Use memory cache
+                              </label>
+                              <div class="form-text">
+                                Store responses in memory for faster access (cleared on server
+                                restart).
+                              </div>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                              <input
+                                type="checkbox"
+                                class="form-check-input"
+                                id="ai-file-cache"
+                                v-model="caching.useFileCache"
+                              />
+                              <label class="form-check-label" for="ai-file-cache">
+                                Use file cache
+                              </label>
+                              <div class="form-text">
+                                Store responses in files for persistence across server restarts.
+                              </div>
+                            </div>
+
+                            <div class="row mb-3">
+                              <div class="col-md-6">
+                                <label for="ai-cache-ttl" class="form-label"
+                                  >Cache TTL (hours)</label
+                                >
+                                <input
+                                  type="number"
+                                  class="form-control"
+                                  id="ai-cache-ttl"
+                                  v-model="cacheTtlHours"
+                                  min="1"
+                                  max="720"
+                                />
+                                <div class="form-text">
+                                  Time to live for cached responses (1-720 hours).
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <label for="ai-memory-cache-size" class="form-label"
+                                  >Memory Cache Size</label
+                                >
+                                <input
+                                  type="number"
+                                  class="form-control"
+                                  id="ai-memory-cache-size"
+                                  v-model="caching.memoryCacheSize"
+                                  min="10"
+                                  max="1000"
+                                />
+                                <div class="form-text">
+                                  Maximum number of responses to keep in memory.
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="mb-3">
+                              <button
+                                type="button"
+                                class="btn btn-outline-secondary btn-sm"
+                                @click="clearCache"
+                              >
+                                <i class="bi bi-trash"></i> Clear Cache
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-outline-secondary btn-sm ms-2"
+                                @click="getCacheStats"
+                              >
+                                <i class="bi bi-bar-chart"></i> Cache Statistics
+                              </button>
+                            </div>
+
+                            <div v-if="cacheStats" class="mb-3 p-2 bg-light rounded">
+                              <h6 class="mb-2">Cache Statistics</h6>
+                              <div class="small">
+                                <div>
+                                  <strong>Memory Cache:</strong>
+                                  {{ cacheStats.memoryCacheSize }} items
+                                </div>
+                                <div>
+                                  <strong>File Cache:</strong> {{ cacheStats.fileCacheSize }} items
+                                  ({{ cacheStats.fileCacheSizeMB }} MB)
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
                           <!-- Add to the AI configuration form in views/session-detail.ejs -->
                           <div class="mb-3 form-check">
                             <input
@@ -1503,6 +1619,16 @@
           const statusMessage = ref("");
           const messageLogs = ref([]);
           const scheduledMessages = ref([]);
+          const cacheTtlHours = ref(24); // Default 24 hours
+          const cacheStats = ref(null);
+          const caching = ref({
+            enabled: true,
+            useMemoryCache: false,
+            useFileCache: true,
+            ttl: 24,
+            memoryCacheSize: 100,
+            fileCacheSize: 100,
+          });
           const aiConfig = ref({
             enabled: false,
             instructions:
@@ -2543,6 +2669,54 @@
             });
           });
 
+          // Cache-related functions
+          const clearCache = async () => {
+            try {
+              const response = await axios.post(`/api/${sessionId}/ai/cache/clear`);
+              if (response.data.success) {
+                showStatusModal("Success", response.data.message || "Cache cleared successfully");
+                cacheStats.value = null;
+              } else {
+                throw new Error(response.data.error || "Failed to clear cache");
+              }
+            } catch (error) {
+              console.error("Error clearing cache:", error);
+              showStatusModal("Error", `Failed to clear cache: ${error.message}`);
+            }
+          };
+
+          const getCacheStats = async () => {
+            try {
+              const response = await axios.get(`/api/${sessionId}/ai/cache/stats`);
+              if (response.data.success) {
+                cacheStats.value = response.data.data;
+              } else {
+                throw new Error(response.data.error || "Failed to get cache statistics");
+              }
+            } catch (error) {
+              console.error("Error getting cache stats:", error);
+              showStatusModal("Error", `Failed to get cache statistics: ${error.message}`);
+            }
+          };
+
+          // Watch for changes to cacheTtlHours to update the ttl in milliseconds
+          watch(cacheTtlHours, (newValue) => {
+            if (aiConfig.value.caching) {
+              aiConfig.value.caching.ttl = newValue * 60 * 60 * 1000; // Convert hours to milliseconds
+            }
+          });
+
+          // Watch for changes to aiConfig.caching.ttl to update cacheTtlHours
+          watch(
+            () => aiConfig.value.caching?.ttl,
+            (newValue) => {
+              if (newValue) {
+                cacheTtlHours.value = Math.round(newValue / (60 * 60 * 1000)); // Convert milliseconds to hours
+              }
+            },
+            { deep: true }
+          );
+
           return {
             // State
             sessionConnected,
@@ -2564,6 +2738,9 @@
             mediaPreviewContent,
             mediaFileInfo,
             daysList,
+            cacheTtlHours,
+            cacheStats,
+            caching,
 
             // Methods
             sendMessage,
@@ -2590,6 +2767,8 @@
             loadConversationHistory,
             clearConversationPrompt,
             loadConversations,
+            clearCache,
+            getCacheStats,
 
             // bulk message
             excelData,

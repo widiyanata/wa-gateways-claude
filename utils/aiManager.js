@@ -2,6 +2,8 @@ const fs = require("fs-extra");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const OpenAI = require("openai");
+const cacheManager = require("./cacheManager");
+const helpers = require("./helpers");
 
 // Constants
 const SESSIONS_DIR = path.join(process.cwd(), "sessions");
@@ -46,12 +48,21 @@ exports.createAIManager = (io) => {
       contextLimit: DEFAULT_CONTEXT_LIMIT,
       autoReply: false,
 
-      // New typing and reading simulation settings
+      // Typing and reading simulation settings
       simulateTyping: true,
       typingDelay: 50, // ms per character
       readingDelay: 200, // ms per word
       minDelay: 1000, // minimum delay in ms
       maxDelay: 10000, // maximum delay in ms
+
+      // Cache settings
+      caching: {
+        enabled: true,
+        useMemoryCache: true,
+        useFileCache: true,
+        memoryCacheSize: 100, // Number of items to keep in memory cache
+        ttl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+      },
 
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -241,9 +252,6 @@ exports.createAIManager = (io) => {
    * @param {string} message - The message text
    * @returns {Promise<Object>} The AI response
    */
-
-  const helpers = require("./helpers");
-
   const processMessage = async (sessionId, contactId, message) => {
     try {
       // Get AI configuration
@@ -325,20 +333,48 @@ exports.createAIManager = (io) => {
    */
   const generateAIResponse = async (messages, config) => {
     try {
-      // Check which provider to use
+      // Generate cache key
+      const cacheKey = cacheManager.generateCacheKey(messages, config);
+
+      // Check if caching is enabled and try to get from cache
+      if (config.caching && config.caching.enabled) {
+        const cachedResponse = await cacheManager.getCacheItem(cacheKey, config.caching);
+        if (cachedResponse) {
+          console.log(`Using cached response for key: ${cacheKey}`);
+
+          // Add cache info to the response
+          return {
+            ...cachedResponse,
+            fromCache: true,
+            cacheKey: cacheKey,
+          };
+        }
+      }
+
+      // Not in cache, generate response from provider
+      let response;
       switch (config.provider) {
         case AI_PROVIDERS.OPENAI:
-          return await generateOpenAIResponse(messages, config);
+          response = await generateOpenAIResponse(messages, config);
+          break;
         case AI_PROVIDERS.DEEPSEEK:
-          return await generateDeepSeekResponse(messages, config);
+          response = await generateDeepSeekResponse(messages, config);
+          break;
         default:
-          return {
+          response = {
             id: uuidv4(),
             content: `Unknown AI provider: ${config.provider}. Please select a valid provider in the AI settings.`,
             model: config.model,
             created: new Date().toISOString(),
           };
       }
+
+      // Cache the response if caching is enabled
+      if (config.caching && config.caching.enabled && !response.error) {
+        await cacheManager.setCacheItem(cacheKey, response, config.caching);
+      }
+
+      return response;
     } catch (error) {
       console.error(`Error in generateAIResponse: ${error.message}`);
 
@@ -557,6 +593,46 @@ exports.createAIManager = (io) => {
     }
   };
 
+  /**
+   * Clear AI response cache
+   * @param {string} sessionId - The session ID (optional, if not provided clears all cache)
+   * @returns {Promise<Object>} Result of the operation
+   */
+  const clearCache = async (sessionId) => {
+    try {
+      // If sessionId is provided, only clear cache for that session
+      // For now, we clear all cache since we don't have session-specific caching
+      await cacheManager.clearAllCache();
+
+      return {
+        success: true,
+        message: sessionId ? `Cache cleared for session ${sessionId}` : "All cache cleared",
+      };
+    } catch (error) {
+      console.error(`Error clearing cache: ${error.message}`);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  };
+
+  /**
+   * Get cache statistics
+   * @returns {Promise<Object>} Cache statistics
+   */
+  const getCacheStats = async () => {
+    try {
+      return await cacheManager.getCacheStats();
+    } catch (error) {
+      console.error(`Error getting cache stats: ${error.message}`);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  };
+
   return {
     initializeAIConfig,
     getAIConfig,
@@ -566,5 +642,7 @@ exports.createAIManager = (io) => {
     clearConversationHistory,
     processMessage,
     testAIConfig,
+    clearCache,
+    getCacheStats,
   };
 };

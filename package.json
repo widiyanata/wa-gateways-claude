@@ -4,8 +4,7 @@
   "description": "WhatsApp Gateway using Baileys",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "build": "pkg ."
+    "start": "node app.js"
   },
   "bin": "app.js",
   "pkg": {

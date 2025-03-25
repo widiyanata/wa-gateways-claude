@@ -608,22 +608,14 @@ exports.createSessionManager = (io) => {
 
       scheduledTasks.set(messageId, task);
 
-      if (messageId === null) {
-        await saveScheduledMessage(sessionId, {
-          id: messageId,
-          to,
-          message,
-          scheduledTime,
-          status: "scheduled",
-          type: "one-time",
-        });
-      } else {
-        await updateScheduledMessage(sessionId, messageId, {
-          to,
-          message,
-          scheduledTime,
-        });
-      }
+      await saveScheduledMessage(sessionId, {
+        id: messageId,
+        to,
+        message,
+        scheduledTime,
+        status: "scheduled",
+        type: "one-time",
+      });
     }
 
     return messageId;

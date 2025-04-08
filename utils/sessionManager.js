@@ -431,16 +431,211 @@ exports.createSessionManager = (io) => {
 
   // Refresh All Session
   const refreshAllSessions = async () => {
-    console.log("Refreshing all sessions...");
-    // get all sessions
-    const sessionLists = await getAllSessions();
-    console.log("sessionLists", sessionLists);
+    console.log("Refreshing all sessions and rescheduling tasks...");
+    const sessionDirs = await fs.readdir(SESSIONS_DIR);
 
-    for (const sessionList of sessionLists) {
-      const { id } = sessionList;
-      console.log("id", id);
-      await createSession(id, false);
+    for (const sessionId of sessionDirs) {
+      const sessionDirPath = path.join(SESSIONS_DIR, sessionId);
+      const stat = await fs.stat(sessionDirPath);
+
+      if (stat.isDirectory()) {
+        console.log(`Refreshing session: ${sessionId}`);
+        try {
+          // Reconnect the WhatsApp session
+          await createSession(sessionId, false);
+          console.log(`Session ${sessionId} reconnected.`);
+
+          // Now, load and reschedule tasks for this session
+          console.log(`Rescheduling tasks for session: ${sessionId}`);
+          const scheduledMessages = await readScheduledMessages(sessionId);
+          const now = new Date();
+
+          for (const msg of scheduledMessages) {
+            // Only reschedule 'scheduled' one-time messages or 'active' recurring ones
+            if (msg.status !== "scheduled" && msg.status !== "active") {
+              continue;
+            }
+
+            const scheduledDate = new Date(msg.scheduledTime);
+            if (isNaN(scheduledDate)) {
+              console.error(`Invalid scheduled time for message ${msg.id} in session ${sessionId}`);
+              continue;
+            }
+
+            if (scheduledDate > now) {
+              // --- Reschedule for the future ---
+              console.log(`Rescheduling future message ${msg.id} for ${scheduledDate}`);
+              let task;
+              let cronExpression;
+
+              if (msg.type === "recurring" && msg.recurringOptions) {
+                // --- Reschedule Recurring ---
+                try {
+                  switch (msg.recurringOptions.type) {
+                    case "daily":
+                      cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} * * *`;
+                      break;
+                    case "weekly":
+                      cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} * * ${scheduledDate.getDay()}`;
+                      break;
+                    case "monthly":
+                      cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} ${scheduledDate.getDate()} * *`;
+                      break;
+                    case "custom":
+                      const dayMap = {
+                        sunday: 0,
+                        monday: 1,
+                        tuesday: 2,
+                        wednesday: 3,
+                        thursday: 4,
+                        friday: 5,
+                        saturday: 6,
+                      };
+                      const dayNumbers = msg.recurringOptions.days
+                        .map((day) => dayMap[day.toLowerCase()])
+                        .filter((d) => d !== undefined);
+                      if (dayNumbers.length === 0) throw new Error("Invalid custom days");
+                      cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} * * ${dayNumbers.join(
+                        ","
+                      )}`;
+                      break;
+                    default:
+                      throw new Error(`Unsupported recurring type: ${msg.recurringOptions.type}`);
+                  }
+
+                  task = cron.schedule(cronExpression, async () => {
+                    try {
+                      console.log(`Executing rescheduled recurring message: ${msg.id}`);
+                      await sendMessage(sessionId, msg.to, msg.message);
+                      if (msg.forwardTo) {
+                        const forwardToArray = msg.forwardTo
+                          .split(",")
+                          .map((n) => n.trim())
+                          .filter((n) => n);
+                        for (const number of forwardToArray) {
+                          await sendMessage(sessionId, number, msg.message);
+                        }
+                      }
+                      await updateScheduledMessage(sessionId, msg.id, {
+                        lastSent: new Date().toISOString(),
+                        status: "active",
+                      });
+
+                      if (msg.recurringOptions.endDate) {
+                        const endDate = new Date(msg.recurringOptions.endDate);
+                        if (!isNaN(endDate) && new Date() > endDate) {
+                          task.stop();
+                          scheduledTasks.delete(msg.id);
+                          await updateScheduledMessage(sessionId, msg.id, { status: "completed" });
+                        }
+                      }
+                    } catch (error) {
+                      console.error(
+                        `Failed to send rescheduled recurring message ${msg.id}:`,
+                        error
+                      );
+                      await updateScheduledMessage(sessionId, msg.id, {
+                        lastError: error.message,
+                        lastErrorTime: new Date().toISOString(),
+                      });
+                    }
+                  });
+                  scheduledTasks.set(msg.id, task);
+                  console.log(
+                    `Rescheduled recurring message ${msg.id} with cron: ${cronExpression}`
+                  );
+                } catch (error) {
+                  console.error(`Error rescheduling recurring message ${msg.id}: ${error.message}`);
+                  await updateScheduledMessage(sessionId, msg.id, {
+                    status: "failed_reschedule",
+                    error: error.message,
+                  });
+                }
+              } else if (msg.type === "one-time" && msg.status === "scheduled") {
+                // --- Reschedule One-Time ---
+                try {
+                  cronExpression = `${scheduledDate.getMinutes()} ${scheduledDate.getHours()} ${scheduledDate.getDate()} ${
+                    scheduledDate.getMonth() + 1
+                  } *`;
+                  task = cron.schedule(cronExpression, async () => {
+                    try {
+                      console.log(`Executing rescheduled one-time message: ${msg.id}`);
+                      await sendMessage(sessionId, msg.to, msg.message);
+                      if (msg.forwardTo) {
+                        const forwardToArray = msg.forwardTo
+                          .split(",")
+                          .map((n) => n.trim())
+                          .filter((n) => n);
+                        for (const number of forwardToArray) {
+                          await sendMessage(sessionId, number, msg.message);
+                        }
+                      }
+                      await updateScheduledMessage(sessionId, msg.id, { status: "sent" });
+                    } catch (error) {
+                      console.error(
+                        `Failed to send rescheduled one-time message ${msg.id}:`,
+                        error
+                      );
+                      await updateScheduledMessage(sessionId, msg.id, {
+                        status: "failed",
+                        error: error.message,
+                      });
+                    } finally {
+                      task.stop();
+                      scheduledTasks.delete(msg.id);
+                      await removeScheduledMessage(sessionId, msg.id); // Remove one-time after execution
+                    }
+                  });
+                  scheduledTasks.set(msg.id, task);
+                  console.log(
+                    `Rescheduled one-time message ${msg.id} with cron: ${cronExpression}`
+                  );
+                } catch (error) {
+                  console.error(`Error rescheduling one-time message ${msg.id}: ${error.message}`);
+                  await updateScheduledMessage(sessionId, msg.id, {
+                    status: "failed_reschedule",
+                    error: error.message,
+                  });
+                }
+              }
+            } else if (msg.type === "one-time" && msg.status === "scheduled") {
+              // --- Send Past-Due One-Time Message Immediately ---
+              console.log(`Sending past-due one-time message ${msg.id} immediately.`);
+              try {
+                await sendMessage(sessionId, msg.to, msg.message);
+                if (msg.forwardTo) {
+                  const forwardToArray = msg.forwardTo
+                    .split(",")
+                    .map((n) => n.trim())
+                    .filter((n) => n);
+                  for (const number of forwardToArray) {
+                    await sendMessage(sessionId, number, msg.message);
+                  }
+                }
+                // Update status first, then remove
+                await updateScheduledMessage(sessionId, msg.id, { status: "sent_on_restart" });
+                await removeScheduledMessage(sessionId, msg.id); // Remove one-time after sending
+                console.log(`Sent and removed past-due message ${msg.id}`);
+              } catch (error) {
+                console.error(`Failed to send past-due message ${msg.id}:`, error);
+                // Update status to failed, then remove
+                await updateScheduledMessage(sessionId, msg.id, {
+                  status: "failed_on_restart",
+                  error: error.message,
+                });
+                await removeScheduledMessage(sessionId, msg.id);
+              }
+            }
+            // Recurring messages whose time has passed are handled by the rescheduled cron job catching the next valid time.
+          }
+          console.log(`Finished rescheduling tasks for session: ${sessionId}`);
+        } catch (error) {
+          console.error(`Error refreshing session ${sessionId} or its tasks:`, error);
+          // Decide if we should continue with other sessions or stop
+        }
+      }
     }
+    console.log("Finished refreshing all sessions and rescheduling tasks.");
   };
 
   // Schedule message
@@ -456,11 +651,9 @@ exports.createSessionManager = (io) => {
     message,
     scheduledTime,
     recurringOptions = null,
-    messageId = null
+    forwardTo = null
   ) => {
-    if (messageId === null) {
-      messageId = generateUniqueId();
-    }
+    const messageId = generateUniqueId();
 
     let task;
 
@@ -535,6 +728,18 @@ exports.createSessionManager = (io) => {
         try {
           console.log(`Sending scheduled recurring message: ${messageId}`);
           await sendMessage(sessionId, to, message);
+          // Send messages to the specified forwardTo numbers
+          if (forwardTo) {
+            // Separate multiple phone numbers with commas
+            const forwardToArray = forwardTo.split(",").map((number) => number.trim());
+            console.log("forwardToArray", forwardToArray);
+            if (forwardTo.length > 0) {
+              for (const number of forwardToArray) {
+                console.log(`Forwarding message to ${number}`);
+                await sendMessage(sessionId, number, message);
+              }
+            }
+          }
 
           // Update last sent time
           await updateScheduledMessage(sessionId, messageId, {
@@ -571,6 +776,7 @@ exports.createSessionManager = (io) => {
         recurringOptions,
         status: "active",
         type: "recurring",
+        forwardTo,
       });
     } else {
       // Original one-time schedule logic
@@ -589,6 +795,19 @@ exports.createSessionManager = (io) => {
         try {
           console.log("Sending scheduled message:", messageId);
           await sendMessage(sessionId, to, message);
+          // Send messages to the specified forwardTo numbers
+          if (forwardTo) {
+            // Separate multiple phone numbers with commas
+            const forwardToArray = forwardTo.split(",").map((number) => number.trim());
+            console.log("forwardToArray", forwardToArray);
+            if (forwardTo.length > 0) {
+              for (const number of forwardToArray) {
+                console.log(`Forwarding message to ${number}`);
+                await sendMessage(sessionId, number, message);
+              }
+            }
+          }
+
           // Update message status in storage
           await updateScheduledMessage(sessionId, messageId, { status: "sent" });
         } catch (error) {
@@ -615,6 +834,7 @@ exports.createSessionManager = (io) => {
         scheduledTime,
         status: "scheduled",
         type: "one-time",
+        forwardTo,
       });
     }
 
@@ -649,7 +869,7 @@ exports.createSessionManager = (io) => {
       message.message,
       message.scheduledTime,
       null,
-      messageId
+      message.forwardTo || []
     );
     return message;
   };
@@ -673,7 +893,7 @@ exports.createSessionManager = (io) => {
       return [];
     }
     const data = await fs.readJson(filePath);
-    // console.log("CRONJOB:", cron.getTasks());
+    console.log("CRONJOB:", cron.getTasks());
     return data.messages;
   };
 
@@ -714,7 +934,7 @@ exports.createSessionManager = (io) => {
   };
 
   // Update the bulkScheduleMessages function to support recurring options
-  const bulkScheduleMessages = async (sessionId, messages, delaySeconds = 0) => {
+  const bulkScheduleMessages = async (sessionId, messages, forwardTo = "", delaySeconds = 0) => {
     // Validate input
     if (!Array.isArray(messages) || messages.length === 0) {
       throw new Error("Messages must be a non-empty array");
@@ -752,7 +972,8 @@ exports.createSessionManager = (io) => {
           msg.to,
           msg.message,
           scheduledTime,
-          msg.recurringOptions || null
+          msg.recurringOptions || null,
+          forwardTo
         );
 
         results.push({

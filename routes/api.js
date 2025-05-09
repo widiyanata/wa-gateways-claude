@@ -85,7 +85,13 @@ router.post("/sessions/:sessionId/logout", async (req, res) => {
 router.post("/send-message/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { to, message } = req.body;
+    let to = req.body.to;
+    const message = req.body.message;
+    const destination = req.body.destination;
+
+    if (destination) {
+      to = destination;
+    }
 
     if (!to || !message) {
       return res.status(400).json({ success: false, error: "Recipient and message are required" });

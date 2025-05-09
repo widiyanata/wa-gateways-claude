@@ -1,0 +1,66 @@
+<ul class="nav nav-tabs" id="sessionTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link active"
+      id="test-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#test"
+      type="button"
+      role="tab"
+    >
+      <i class="bi bi-send"></i> Send Message
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link"
+      id="logs-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#logs"
+      type="button"
+      role="tab"
+    >
+      <i class="bi bi-list-ul"></i> Activity Logs
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link"
+      id="settings-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#settings"
+      type="button"
+      role="tab"
+    >
+      <i class="bi bi-gear"></i> Session Settings
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link"
+      id="ai-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#ai"
+      type="button"
+      role="tab"
+    >
+      <i class="bi bi-robot"></i> AI Assistant
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content bg-white p-3 rounded border border-top-0 shadow-sm" id="sessionTabsContent">
+  <!-- Test Message Tab -->
+  <div class="tab-pane fade show active" id="test" role="tabpanel">
+    <%- include('send-message-tab') %>
+  </div>
+
+  <!-- Logs Tab -->
+  <div class="tab-pane fade" id="logs" role="tabpanel"><%- include('logs-tab') %></div>
+
+  <!-- Settings Tab -->
+  <div class="tab-pane fade" id="settings" role="tabpanel"><%- include('setting-tab') %></div>
+
+  <!-- AI Assistant Tab -->
+  <div class="tab-pane fade" id="ai" role="tabpanel"><%- include('ai-assistant-tab') %></div>
+</div>

@@ -1,0 +1,8 @@
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/vue@3.3.4/dist/vue.global.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/socket-handlers.js"></script>
+<% if (locals.pageScripts) { %> <% pageScripts.forEach(function(script) { %>
+<script src="/js/pages/<%= script %>.js"></script>
+<% }); %> <% } %>

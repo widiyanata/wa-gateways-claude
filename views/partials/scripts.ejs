@@ -1,0 +1,1190 @@
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/vue@3.3.4/dist/vue.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  const { createApp, ref, onMounted, computed, watch } = Vue;
+
+  const app = createApp({
+    setup() {
+      // Constants and References
+      const sessionId = "<%= sessionId %>";
+      const socket = io();
+      let statusModal = null;
+      let deleteModal = null;
+
+      // State variables
+      const sessionConnected = ref(false);
+      const qrCode = ref("");
+      const statusTitle = ref("");
+      const statusMessage = ref("");
+      const messageLogs = ref([]);
+      const scheduledMessages = ref([]);
+      const cacheTtlHours = ref(24); // Default 24 hours
+      const cacheStats = ref(null);
+      const caching = ref({
+        enabled: true,
+        useMemoryCache: false,
+        useFileCache: true,
+        ttl: 24,
+        memoryCacheSize: 100,
+        fileCacheSize: 100,
+      });
+      const aiConfig = ref({
+        enabled: false,
+        instructions:
+          "You are a helpful assistant. Respond to messages in a friendly and concise manner.",
+        model: "gpt-3.5-turbo",
+        maxTokens: 150,
+        temperature: 0.7,
+        contextLimit: 10,
+        autoReply: false,
+      });
+      const testMessage = ref("");
+      const testResult = ref(null);
+      const selectedContact = ref("");
+      const conversationHistory = ref([]);
+      const recentContacts = ref([]);
+
+      // Form data
+      const messageForm = ref({
+        phone: "",
+        message: "",
+      });
+
+      const mediaForm = ref({
+        phone: "",
+        mediaType: "image",
+        caption: "",
+        mediaUrl: "",
+        mediaFile: null,
+      });
+
+      const scheduleForm = ref({
+        phone: "",
+        message: "",
+        scheduledTime: "",
+        isRecurring: false,
+        recurringType: "daily",
+        selectedDays: {
+          monday: false,
+          tuesday: false,
+          wednesday: false,
+          thursday: false,
+          friday: false,
+          saturday: false,
+          sunday: false,
+        },
+        endDate: "",
+      });
+
+      // Media preview
+      const showMediaPreview = ref(false);
+      const mediaPreviewContent = ref("");
+      const mediaFileInfo = ref({
+        name: "",
+        size: "",
+        type: "",
+      });
+
+      const daysList = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ];
+
+      const excelData = ref([]);
+      const template = ref("");
+      const timeConfig = ref({
+        minHour: 9,
+        maxHour: 17,
+        minMinute: 0,
+        maxMinute: 59,
+      });
+      const showUploadInfo = ref(false);
+      const fileDetails = ref("");
+      const errorMessage = ref("");
+      const parametersInfo = ref("");
+      const previewData = ref([]);
+
+      // Forward message to
+      const forwardTo = ref("");
+
+      // Computed properties
+      const isSubmitDisabled = computed(() => {
+        return !template.value.trim() || excelData.value.length === 0;
+      });
+
+      const showPreview = computed(() => {
+        return excelData.value.length > 0 && template.value.trim() !== "";
+      });
+
+      // Load AI configuration
+      const loadAIConfig = async () => {
+        try {
+          const response = await axios.get(`/api/${sessionId}/ai/config`);
+          if (response.data.success) {
+            aiConfig.value = response.data.data;
+          }
+        } catch (error) {
+          console.error("Error loading AI config:", error);
+          showStatusModal("Error", `Failed to load AI configuration: ${error.message}`);
+        }
+      };
+
+      // Update AI configuration
+      const updateAIConfig = async () => {
+        try {
+          const response = await axios.put(`/api/${sessionId}/ai/config`, aiConfig.value);
+          if (response.data.success) {
+            showStatusModal("Success", "AI configuration updated successfully");
+          }
+        } catch (error) {
+          console.error("Error updating AI config:", error);
+          showStatusModal("Error", `Failed to update AI configuration: ${error.message}`);
+        }
+      };
+
+      // Reset AI configuration to defaults
+      const resetAIConfig = async () => {
+        aiConfig.value = {
+          enabled: false,
+          instructions:
+            "You are a helpful assistant. Respond to messages in a friendly and concise manner.",
+          model: "gpt-3.5-turbo",
+          maxTokens: 150,
+          temperature: 0.7,
+          contextLimit: 10,
+          autoReply: false,
+        };
+      };
+
+      // Test AI with a message
+      const testAI = async () => {
+        if (!testMessage.value) return;
+
+        try {
+          const response = await axios.post(`/api/${sessionId}/ai/test`, {
+            message: testMessage.value,
+          });
+
+          if (response.data.success) {
+            testResult.value = response.data.data.response;
+          }
+        } catch (error) {
+          console.error("Error testing AI:", error);
+          showStatusModal("Error", `Failed to test AI: ${error.message}`);
+        }
+      };
+
+      // Load recent contacts (from message history)
+      const loadRecentContacts = async () => {
+        try {
+          const response = await axios.get(`/api/${sessionId}/messages`, {
+            params: { limit: 100 },
+          });
+
+          if (response.data && response.data.messages) {
+            // Extract unique contacts from messages
+            const contacts = new Map();
+
+            response.data.messages.forEach((msg) => {
+              const contactId = msg.from || msg.to;
+              if (contactId && !contacts.has(contactId)) {
+                contacts.set(contactId, {
+                  id: contactId,
+                  name: contactId.replace("@s.whatsapp.net", ""),
+                });
+              }
+            });
+
+            recentContacts.value = Array.from(contacts.values());
+          }
+        } catch (error) {
+          console.error("Error loading contacts:", error);
+        }
+      };
+
+      // Load conversation history for a contact
+      const loadConversationHistory = async () => {
+        if (!selectedContact.value) {
+          conversationHistory.value = [];
+          return;
+        }
+
+        try {
+          const response = await axios.get(
+            `/api/${sessionId}/ai/conversation/${selectedContact.value}`
+          );
+
+          if (response.data.success) {
+            conversationHistory.value = response.data.data;
+          }
+        } catch (error) {
+          console.error("Error loading conversation history:", error);
+          conversationHistory.value = [];
+        }
+      };
+
+      // Clear conversation history for a contact
+      const clearConversationPrompt = async () => {
+        if (!selectedContact.value) return;
+
+        if (
+          confirm(
+            `Are you sure you want to clear the conversation history with ${selectedContact.value.replace(
+              "@s.whatsapp.net",
+              ""
+            )}?`
+          )
+        ) {
+          try {
+            const response = await axios.delete(
+              `/api/${sessionId}/ai/conversation/${selectedContact.value}`
+            );
+
+            if (response.data.success) {
+              conversationHistory.value = [];
+              showStatusModal("Success", "Conversation history cleared successfully");
+            }
+          } catch (error) {
+            console.error("Error clearing conversation history:", error);
+            showStatusModal("Error", `Failed to clear conversation history: ${error.message}`);
+          }
+        }
+      };
+
+      // Load conversations (refresh contacts and history)
+      const loadConversations = async () => {
+        await loadRecentContacts();
+        if (selectedContact.value) {
+          await loadConversationHistory();
+        }
+      };
+
+      // Methods
+      function excelToJson(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsBinaryString(file);
+
+          reader.onload = (event) => {
+            try {
+              const data = event.target.result;
+              const workbook = XLSX.read(data, { type: "binary" });
+              const sheetName = workbook.SheetNames[0];
+              const sheet = workbook.Sheets[sheetName];
+              const json = XLSX.utils.sheet_to_json(sheet);
+
+              resolve(json);
+            } catch (error) {
+              reject(error);
+            }
+          };
+
+          reader.onerror = (error) => reject(error);
+        });
+      }
+
+      function validateExcelData(data) {
+        if (!Array.isArray(data) || data.length === 0) {
+          return {
+            isValid: false,
+            errors: ["Excel file is empty or has no valid data"],
+          };
+        }
+
+        const firstRow = data[0];
+        const errors = [];
+
+        // Check required columns
+        const hasToColumn =
+          "to" in firstRow || "phone" in firstRow || "number" in firstRow || "no" in firstRow;
+        const hasNameColumn = "name" in firstRow || "nama" in firstRow;
+
+        if (!hasToColumn) {
+          errors.push("Missing required 'to' column (alternatives: 'phone', 'number', 'no')");
+        }
+
+        if (!hasNameColumn) {
+          errors.push("Missing required 'name' column (alternative: 'nama')");
+        }
+
+        return {
+          isValid: errors.length === 0,
+          errors: errors,
+        };
+      }
+
+      function renderTemplate(templateText, data) {
+        return templateText.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
+          return data[key] !== undefined ? data[key] : match;
+        });
+      }
+
+      function getRandomTime(
+        minHour = 0,
+        maxHour = 23,
+        minMinute = 0,
+        maxMinute = 59,
+        minSecond = 0,
+        maxSecond = 59,
+        minFutureMinutes = 3
+      ) {
+        // Get current time
+        const now = new Date();
+
+        // Calculate minimum allowed time (current time + minFutureMinutes minutes)
+        const minTime = new Date(now.getTime() + minFutureMinutes * 60000);
+
+        // Extract minimum required hours, minutes, seconds from minTime
+        const minTimeHour = minTime.getHours();
+        const minTimeMinute = minTime.getMinutes();
+        const minTimeSecond = minTime.getSeconds();
+
+        // Validate input ranges
+        minHour = Math.max(0, Math.min(23, minHour));
+        maxHour = Math.max(0, Math.min(23, maxHour));
+        minMinute = Math.max(0, Math.min(59, minMinute));
+        maxMinute = Math.max(0, Math.min(59, maxMinute));
+        minSecond = Math.max(0, Math.min(59, minSecond));
+        maxSecond = Math.max(0, Math.min(59, maxSecond));
+
+        // Ensure min is not greater than max
+        if (minHour > maxHour) [minHour, maxHour] = [maxHour, minHour];
+        if (minMinute > maxMinute) [minMinute, maxMinute] = [maxMinute, minMinute];
+        if (minSecond > maxSecond) [minSecond, maxSecond] = [maxSecond, minSecond];
+
+        // Adjust min values to ensure we're not below the current time + offset
+        if (minTimeHour > minHour) {
+          minHour = minTimeHour;
+        } else if (minTimeHour === minHour) {
+          if (minTimeMinute > minMinute) {
+            minMinute = minTimeMinute;
+          } else if (minTimeMinute === minMinute) {
+            if (minTimeSecond > minSecond) {
+              minSecond = minTimeSecond;
+            }
+          }
+        }
+
+        // If min values are now greater than max values, adjust max values
+        if (minHour > maxHour) {
+          // Can't satisfy both constraints, so prioritize the future time requirement
+          maxHour = Math.min(23, minHour);
+        }
+        if (minHour === maxHour && minMinute > maxMinute) {
+          maxMinute = Math.min(59, minMinute);
+        }
+        if (minHour === maxHour && minMinute === maxMinute && minSecond > maxSecond) {
+          maxSecond = Math.min(59, minSecond);
+        }
+
+        // Generate random components within the adjusted ranges
+        const hours = String(
+          Math.floor(minHour + Math.random() * (maxHour - minHour + 1))
+        ).padStart(2, "0");
+
+        // Handle minutes based on hour selection
+        let minutes;
+        if (parseInt(hours) === minHour) {
+          minutes = String(
+            Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
+          ).padStart(2, "0");
+        } else {
+          minutes = String(
+            Math.floor(minMinute + Math.random() * (maxMinute - minMinute + 1))
+          ).padStart(2, "0");
+        }
+
+        // Handle seconds based on hour and minute selection
+        let seconds;
+        if (parseInt(hours) === minHour && parseInt(minutes) === minMinute) {
+          seconds = String(
+            Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
+          ).padStart(2, "0");
+        } else {
+          seconds = String(
+            Math.floor(minSecond + Math.random() * (maxSecond - minSecond + 1))
+          ).padStart(2, "0");
+        }
+
+        return `${hours}:${minutes}:${seconds}`;
+      }
+
+      function updatePreview() {
+        if (excelData.value.length === 0) return;
+
+        const data = [];
+        const previewLimit = Math.min(10, excelData.value.length);
+
+        // Get time settings
+        const minHour = timeConfig.value.minHour;
+        const maxHour = timeConfig.value.maxHour;
+        const minMinute = timeConfig.value.minMinute;
+        const maxMinute = timeConfig.value.maxMinute;
+
+        for (let i = 0; i < previewLimit; i++) {
+          const row = excelData.value[i];
+          const processedRow = {};
+
+          // Process the phone number field (accept various column names)
+          if (row.to) processedRow.phone = row.to;
+          else if (row.phone) processedRow.phone = row.phone;
+          else if (row.number) processedRow.phone = row.number;
+          else if (row.no) processedRow.phone = row.no;
+
+          // Process the name field
+          if (row.name) processedRow.name = row.name;
+          else if (row.nama) processedRow.name = row.nama;
+
+          // Process message template
+          if (row.message) {
+            processedRow.message = row.message;
+          } else {
+            processedRow.message = renderTemplate(template.value, row);
+          }
+
+          // Process scheduled time
+          if (row.scheduledTime) {
+            processedRow.scheduledTime = row.scheduledTime;
+          } else {
+            // Generate random time within configured hours
+            processedRow.scheduledTime = getRandomTime(minHour, maxHour, minMinute, maxMinute);
+          }
+
+          data.push(processedRow);
+        }
+
+        previewData.value = data;
+      }
+
+      function resetForm() {
+        excelData.value = [];
+        template.value = "";
+        showUploadInfo.value = false;
+        fileDetails.value = "";
+        errorMessage.value = "";
+        previewData.value = [];
+        document.getElementById("excelFile").value = "";
+      }
+
+      async function submitForm() {
+        if (isSubmitDisabled.value) return;
+
+        try {
+          console.log("excelData.value", excelData.value);
+          // Process all records
+          const processedData = excelData.value.map((row) => {
+            const processedRow = {};
+
+            // Process the phone number field (accept various column names)
+            if (row.to) processedRow.to = row.to;
+            else if (row.phone) processedRow.to = row.phone;
+            else if (row.number) processedRow.to = row.number;
+            else if (row.no) processedRow.to = row.no;
+
+            // Process the name field
+            if (row.name) processedRow.name = row.name;
+            else if (row.nama) processedRow.name = row.nama;
+
+            // Process message template
+            if (row.message) {
+              processedRow.message = row.message;
+            } else {
+              processedRow.message = renderTemplate(template.value, row);
+            }
+
+            // Process scheduled time
+            if (row.scheduledTime) {
+              processedRow.scheduledTime = row.scheduledTime;
+            } else {
+              // Generate random time within configured hours
+              processedRow.scheduledTime = getRandomTime(
+                timeConfig.value.minHour,
+                timeConfig.value.maxHour,
+                timeConfig.value.minMinute,
+                timeConfig.value.maxMinute
+              );
+            }
+
+            return processedRow;
+          });
+
+          console.log("processedData", processedData);
+
+          const payload = {
+            datajson: JSON.stringify(processedData),
+            timeConfig: JSON.stringify(timeConfig.value),
+            template: template.value,
+            // forward to
+            forwardTo: forwardTo.value,
+          };
+
+          // Submit the form (you would normally use fetch or axios here)
+          const response = await fetch(`/session/${sessionId}/bulk-message`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          // Handle success response
+          showStatusModal("Success", `Successfully scheduled ${processedData.length} messages!`);
+          loadScheduledMessages();
+          resetForm();
+        } catch (error) {
+          console.error("Error submitting form:", error);
+          errorMessage.value = `Error submitting form: ${error.message}`;
+        }
+      }
+
+      // Watch for changes to template to update preview
+      watch(template, () => {
+        if (excelData.value.length > 0) {
+          updatePreview();
+        }
+      });
+
+      // Watch for changes to time config to update preview
+      watch(
+        timeConfig,
+        () => {
+          if (excelData.value.length > 0 && previewData.value.length > 0) {
+            updatePreview();
+          }
+        },
+        { deep: true }
+      );
+
+      async function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+          const data = await excelToJson(file);
+          const validation = validateExcelData(data);
+
+          if (validation.isValid) {
+            excelData.value = data;
+
+            // Get all unique keys from all objects
+            const allKeys = [...new Set(data.flatMap((obj) => Object.keys(obj)))];
+
+            // check if certain keys are missing
+            const requiredKeys = ["to"];
+            const missingKeys = requiredKeys.filter((key) => !allKeys.includes(key.toLowerCase()));
+            if (missingKeys.length > 0) {
+              errorMessage.value = `<strong>Excel validation failed:</strong><ul>${missingKeys
+                .map(
+                  (key) =>
+                    `<li><small>Column <b><u>${key}</u></b> is missing, please add it (or rename it) to the Excel file</small></li>`
+                )
+                .join("")}</ul>`;
+              showUploadInfo.value = false;
+              return;
+            }
+
+            // Format parameters info
+            parametersInfo.value = `Use ${allKeys
+              .map((key) => `{{ ${key} }}`)
+              .join(", ")} in message template.`;
+
+            fileDetails.value = `Loaded ${data.length} records from "${file.name}"`;
+            showUploadInfo.value = true;
+            errorMessage.value = "";
+
+            // Update preview if template exists
+            if (template.value.trim()) {
+              updatePreview();
+            }
+          } else {
+            errorMessage.value = `<strong>Excel validation failed:</strong><ul>${validation.errors
+              .map((err) => `<li>${err}</li>`)
+              .join("")}</ul>`;
+            showUploadInfo.value = false;
+          }
+        } catch (error) {
+          console.error("Error processing Excel file:", error);
+          errorMessage.value = `Error processing Excel file: ${error.message}`;
+          showUploadInfo.value = false;
+        }
+      }
+      // Format file size
+      const formatFileSize = (bytes) => {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+      };
+
+      // Format date time
+      const formatDateTime = (dateTimeStr) => {
+        return new Date(dateTimeStr).toLocaleString();
+      };
+
+      // Capitalize first letter
+      const capitalizeFirstLetter = (string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      };
+
+      // Load session info
+      const loadSessionInfo = async () => {
+        try {
+          const response = await fetch("/api/sessions");
+          const data = await response.json();
+
+          if (data.success) {
+            const session = data.data.find((s) => s.id === sessionId);
+            if (session) {
+              sessionConnected.value = session.connected;
+            }
+          }
+        } catch (error) {
+          console.error("Error loading session info:", error);
+        }
+      };
+
+      // Load scheduled messages
+      const loadScheduledMessages = async () => {
+        try {
+          const response = await fetch(`/api/schedule-messages/${sessionId}`);
+          const data = await response.json();
+          if (data.success) {
+            scheduledMessages.value = data.data;
+          } else {
+            throw new Error(data.error);
+          }
+        } catch (error) {
+          showStatusModal("Error", error.message);
+        }
+      };
+
+      // Show status modal
+      const showStatusModal = (title, message) => {
+        statusTitle.value = title;
+        statusMessage.value = message;
+        statusModal.show();
+      };
+
+      // Show delete modal
+      const showDeleteModal = () => {
+        deleteModal.show();
+      };
+
+      // Clear logs
+      const clearLogs = () => {
+        messageLogs.value = [];
+      };
+
+      // Send message
+      const sendMessage = async () => {
+        try {
+          const response = await fetch(`/api/send-message/${sessionId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: messageForm.value.phone,
+              message: messageForm.value.message,
+            }),
+          });
+          const result = await response.json();
+          if (result.success) {
+            showStatusModal("Success", "Message sent successfully.");
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          showStatusModal("Error", error.message);
+        }
+      };
+
+      // Handle file change
+      const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          mediaForm.value.mediaFile = file;
+          mediaForm.value.mediaUrl = ""; // Clear URL input
+          showMediaPreview.value = true;
+
+          // Update file info
+          mediaFileInfo.value = {
+            name: file.name,
+            size: formatFileSize(file.size),
+            type: file.type,
+          };
+
+          // Create preview based on file type
+          if (file.type.startsWith("image/")) {
+            mediaPreviewContent.value = `<img src="${URL.createObjectURL(
+              file
+            )}" class="img-fluid">`;
+          } else if (file.type.startsWith("video/")) {
+            mediaPreviewContent.value = `<video src="${URL.createObjectURL(
+              file
+            )}" controls class="img-fluid"></video>`;
+          } else if (file.type.startsWith("audio/")) {
+            mediaPreviewContent.value = `<audio src="${URL.createObjectURL(
+              file
+            )}" controls class="w-100"></audio>`;
+          } else {
+            mediaPreviewContent.value = `
+                <i class="bi bi-file-earmark-text media-file-icon"></i>
+                <p class="mt-2">${file.type || "Document"}</p>
+              `;
+          }
+        } else {
+          clearMediaPreview();
+        }
+      };
+
+      // Handle URL input
+      const handleUrlInput = () => {
+        if (mediaForm.value.mediaUrl) {
+          // Clear file input
+          mediaForm.value.mediaFile = null;
+          const fileInput = document.getElementById("media-file");
+          if (fileInput) fileInput.value = "";
+
+          showMediaPreview.value = true;
+          const url = mediaForm.value.mediaUrl;
+          const mediaType = mediaForm.value.mediaType;
+
+          // Update file info
+          mediaFileInfo.value = {
+            name: url.split("/").pop() || "Remote file",
+            size: "Unknown size",
+            type: mediaType,
+          };
+
+          // Create preview based on media type
+          if (mediaType === "image") {
+            mediaPreviewContent.value = `<img src="${url}" class="img-fluid" onerror="this.onerror=null;this.style.display='none';this.insertAdjacentHTML('afterend', '<p class=\'text-danger\'>Unable to preview image URL</p>');">`;
+          } else if (mediaType === "video") {
+            mediaPreviewContent.value = `
+                <i class="bi bi-film media-file-icon"></i>
+                <p class="mt-2">Video URL (preview not available)</p>
+              `;
+          } else if (mediaType === "audio") {
+            mediaPreviewContent.value = `
+                <i class="bi bi-music-note-beamed media-file-icon"></i>
+                <p class="mt-2">Audio URL (preview not available)</p>
+              `;
+          } else {
+            mediaPreviewContent.value = `
+                <i class="bi bi-file-earmark-text media-file-icon"></i>
+                <p class="mt-2">Document URL (preview not available)</p>
+              `;
+          }
+        } else if (!mediaForm.value.mediaFile) {
+          clearMediaPreview();
+        }
+      };
+
+      // Clear media preview
+      const clearMediaPreview = () => {
+        showMediaPreview.value = false;
+        mediaPreviewContent.value = "";
+        mediaFileInfo.value = {
+          name: "",
+          size: "",
+          type: "",
+        };
+        mediaForm.value.mediaFile = null;
+        mediaForm.value.mediaUrl = "";
+      };
+
+      // Send media
+      const sendMedia = async () => {
+        try {
+          let response;
+
+          // Check if a file is selected
+          if (mediaForm.value.mediaFile) {
+            // Use FormData for file upload
+            const formData = new FormData();
+            formData.append("to", mediaForm.value.phone);
+            formData.append("caption", mediaForm.value.caption);
+            formData.append("media", mediaForm.value.mediaFile);
+
+            response = await fetch(`/api/send-media/${sessionId}`, {
+              method: "POST",
+              body: formData,
+            });
+          } else {
+            // Use JSON for URL-based media
+            if (!mediaForm.value.mediaUrl || !mediaForm.value.mediaType) {
+              throw new Error("Please provide either a file or a media URL with type");
+            }
+
+            response = await fetch(`/api/send-media/${sessionId}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: mediaForm.value.phone,
+                mediaUrl: mediaForm.value.mediaUrl,
+                mediaType: mediaForm.value.mediaType,
+                caption: mediaForm.value.caption,
+              }),
+            });
+          }
+
+          const result = await response.json();
+          if (result.success) {
+            showStatusModal("Success", "Media sent successfully.");
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          showStatusModal("Error", error.message);
+        }
+      };
+
+      // Schedule message
+      const scheduleMessage = async () => {
+        let payload = {
+          to: scheduleForm.value.phone,
+          message: scheduleForm.value.message,
+          scheduledTime: scheduleForm.value.scheduledTime,
+        };
+
+        // Add recurring options if selected
+        if (scheduleForm.value.isRecurring) {
+          const recurringType = scheduleForm.value.recurringType;
+          let recurringOptions = {
+            type: recurringType,
+          };
+
+          // If custom days are selected, add them to the options
+          if (recurringType === "custom") {
+            const selectedDays = Object.keys(scheduleForm.value.selectedDays).filter(
+              (day) => scheduleForm.value.selectedDays[day]
+            );
+
+            if (selectedDays.length === 0) {
+              showStatusModal(
+                "Error",
+                "Please select at least one day for custom recurring schedule"
+              );
+              return;
+            }
+
+            recurringOptions.days = selectedDays;
+          }
+
+          // Add end date if specified
+          if (scheduleForm.value.endDate) {
+            recurringOptions.endDate = scheduleForm.value.endDate
+              ? new Date(scheduleForm.value.endDate).toISOString()
+              : null;
+          }
+
+          payload.recurringOptions = recurringOptions;
+        }
+
+        try {
+          const response = await fetch(`/api/schedule-message/${sessionId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const result = await response.json();
+          if (result.success) {
+            showStatusModal("Success", "Message scheduled successfully.");
+            loadScheduledMessages();
+            // Reset form
+            scheduleForm.value = {
+              phone: "",
+              message: "",
+              scheduledTime: "",
+              isRecurring: false,
+              recurringType: "daily",
+              selectedDays: {
+                monday: false,
+                tuesday: false,
+                wednesday: false,
+                thursday: false,
+                friday: false,
+                saturday: false,
+                sunday: false,
+              },
+              endDate: "",
+            };
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          showStatusModal("Error", error.message);
+        }
+      };
+
+      // Edit scheduled message
+      const editScheduledMessage = async (messageId) => {
+        try {
+          const message = scheduledMessages.value.find((msg) => msg.id === messageId);
+          if (message) {
+            // Populate form with existing data using prompts (this should be replaced with a proper modal)
+            const newTo = prompt(
+              "Enter new phone number:",
+              message.to.replace("@s.whatsapp.net", "")
+            );
+            if (newTo === null) return; // Cancelled
+
+            const newMessage = prompt("Enter new message:", message.message);
+            if (newMessage === null) return; // Cancelled
+
+            const newScheduledTime = prompt(
+              "Enter new scheduled time (YYYY-MM-DDTHH:MM):",
+              message.scheduledTime.slice(0, 16)
+            );
+            if (newScheduledTime === null) return; // Cancelled
+
+            // Send update request
+            const updateResponse = await fetch(`/api/schedule-message/${sessionId}/${messageId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: newTo,
+                message: newMessage,
+                scheduledTime: newScheduledTime,
+              }),
+            });
+
+            const updateResult = await updateResponse.json();
+            if (updateResult.success) {
+              showStatusModal("Success", "Scheduled message updated successfully.");
+              loadScheduledMessages();
+            } else {
+              throw new Error(updateResult.error);
+            }
+          } else {
+            throw new Error("Scheduled message not found");
+          }
+        } catch (error) {
+          showStatusModal("Error", error.message);
+        }
+      };
+
+      // Delete scheduled message
+      const deleteScheduledMessage = async (messageId) => {
+        try {
+          const response = await fetch(`/api/schedule-message/${sessionId}/${messageId}`, {
+            method: "DELETE",
+          });
+          const result = await response.json();
+          if (result.success) {
+            showStatusModal("Success", "Scheduled message deleted successfully.");
+            loadScheduledMessages();
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          showStatusModal("Error", error.message);
+        }
+      };
+
+      // Logout session
+      const logoutSession = async () => {
+        try {
+          const response = await fetch(`/api/sessions/${sessionId}/logout`, {
+            method: "POST",
+          });
+          const result = await response.json();
+          if (result.success) {
+            showStatusModal("Success", "Session logged out successfully.");
+            sessionConnected.value = false;
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          showStatusModal("Error", error.message);
+        }
+      };
+
+      // Delete session
+      const deleteSession = async () => {
+        try {
+          const response = await fetch(`/api/sessions/${sessionId}`, {
+            method: "DELETE",
+          });
+          const result = await response.json();
+          if (result.success) {
+            showStatusModal("Success", "Session deleted successfully.");
+            // Redirect to home after a short delay
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 2000);
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          showStatusModal("Error", error.message);
+        }
+      };
+
+      // Socket.io event handlers
+      onMounted(() => {
+        // Initialize Bootstrap modals
+        statusModal = new bootstrap.Modal(document.getElementById("statusModal"));
+        deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+
+        // Load initial data
+        loadSessionInfo();
+        loadScheduledMessages();
+        loadAIConfig();
+        loadRecentContacts();
+
+        // Set up socket listeners
+        socket.on(`qr.${sessionId}`, (data) => {
+          qrCode.value = data.qrCode;
+        });
+
+        socket.on(`session.${sessionId}.connected`, (data) => {
+          sessionConnected.value = data.connected;
+        });
+
+        socket.on("session.update", (data) => {
+          if (data.action === "remove" && data.sessionId === sessionId) {
+            alert("Session has been removed.");
+            window.location.href = "/";
+          } else if (data.action === "update" && data.session.id === sessionId) {
+            // Update session info if needed
+          }
+        });
+
+        socket.on(`${sessionId}.message`, (message) => {
+          messageLogs.value = message.messages.map((msg) => msg).reverse();
+        });
+      });
+
+      // Cache-related functions
+      const clearCache = async () => {
+        try {
+          const response = await axios.post(`/api/${sessionId}/ai/cache/clear`);
+          if (response.data.success) {
+            showStatusModal("Success", response.data.message || "Cache cleared successfully");
+            cacheStats.value = null;
+          } else {
+            throw new Error(response.data.error || "Failed to clear cache");
+          }
+        } catch (error) {
+          console.error("Error clearing cache:", error);
+          showStatusModal("Error", `Failed to clear cache: ${error.message}`);
+        }
+      };
+
+      const getCacheStats = async () => {
+        try {
+          const response = await axios.get(`/api/${sessionId}/ai/cache/stats`);
+          if (response.data.success) {
+            cacheStats.value = response.data.data;
+          } else {
+            throw new Error(response.data.error || "Failed to get cache statistics");
+          }
+        } catch (error) {
+          console.error("Error getting cache stats:", error);
+          showStatusModal("Error", `Failed to get cache statistics: ${error.message}`);
+        }
+      };
+
+      // Watch for changes to cacheTtlHours to update the ttl in milliseconds
+      watch(cacheTtlHours, (newValue) => {
+        if (aiConfig.value.caching) {
+          aiConfig.value.caching.ttl = newValue * 60 * 60 * 1000; // Convert hours to milliseconds
+        }
+      });
+
+      // Watch for changes to aiConfig.caching.ttl to update cacheTtlHours
+      watch(
+        () => aiConfig.value.caching?.ttl,
+        (newValue) => {
+          if (newValue) {
+            cacheTtlHours.value = Math.round(newValue / (60 * 60 * 1000)); // Convert milliseconds to hours
+          }
+        },
+        { deep: true }
+      );
+
+      return {
+        // State
+        sessionConnected,
+        qrCode,
+        statusTitle,
+        statusMessage,
+        messageLogs,
+        scheduledMessages,
+        aiConfig,
+        testMessage,
+        testResult,
+        selectedContact,
+        conversationHistory,
+        recentContacts,
+        messageForm,
+        mediaForm,
+        scheduleForm,
+        showMediaPreview,
+        mediaPreviewContent,
+        mediaFileInfo,
+        daysList,
+        cacheTtlHours,
+        cacheStats,
+        caching,
+
+        // Methods
+        sendMessage,
+        handleFileChange,
+        handleUrlInput,
+        clearMediaPreview,
+        sendMedia,
+        scheduleMessage,
+        loadScheduledMessages,
+        editScheduledMessage,
+        deleteScheduledMessage,
+        showDeleteModal,
+        deleteSession,
+        logoutSession,
+        clearLogs,
+        formatDateTime,
+        capitalizeFirstLetter,
+
+        // AI methods
+        loadAIConfig,
+        updateAIConfig,
+        resetAIConfig,
+        testAI,
+        loadConversationHistory,
+        clearConversationPrompt,
+        loadConversations,
+        clearCache,
+        getCacheStats,
+
+        // bulk message
+        excelData,
+        template,
+        timeConfig,
+        showUploadInfo,
+        fileDetails,
+        errorMessage,
+        parametersInfo,
+        isSubmitDisabled,
+        showPreview,
+        previewData,
+        handleFileUpload,
+        resetForm,
+        submitForm,
+        forwardTo,
+      };
+    },
+  }).mount("#app");
+</script>

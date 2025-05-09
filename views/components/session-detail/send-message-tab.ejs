@@ -1,0 +1,659 @@
+<div class="row">
+  <div class="col-12">
+    <!-- <h3 class="mt-2 mb-4">Send a Messages</h3> -->
+  </div>
+  <div class="col-md-5">
+    <!-- Nav tabs -->
+    <ul class="nav nav-pills nav-justified p-1 border bg-light rounded" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link active"
+          id="home-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#home"
+          type="button"
+          role="tab"
+          aria-controls="home"
+          aria-selected="true"
+        >
+          <i class="bi bi-card-text"></i>
+          Text
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="messages-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#messages"
+          type="button"
+          role="tab"
+          aria-controls="messages"
+          aria-selected="false"
+        >
+          <i class="bi bi-images"></i>
+          Media
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="profile-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#profile"
+          type="button"
+          role="tab"
+          aria-controls="profile"
+          aria-selected="false"
+        >
+          <i class="bi bi-clock-history"></i>
+          Schedule
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="col-md-12">
+    <!-- Tab panes -->
+    <div class="tab-content">
+      <div class="tab-pane active" id="home" role="tabpanel" aria-labelledby="home-tab">
+        <div class="row">
+          <div class="col-md-5">
+            <div class="card">
+              <div class="card-header">
+                <h5>Send Message</h5>
+              </div>
+              <div class="card-body">
+                <form @submit.prevent="sendMessage" id="message-form">
+                  <div class="mb-3">
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="phone"
+                      v-model="messageForm.phone"
+                      placeholder="+1234567890"
+                      required
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="message" class="form-label">Message</label>
+                    <textarea
+                      class="form-control"
+                      id="message"
+                      v-model="messageForm.message"
+                      rows="3"
+                      required
+                    ></textarea>
+                  </div>
+                  <div class="card mb-3">
+                    <div class="card-header">
+                      <h6 class="mb-0">Preview</h6>
+                    </div>
+                    <div class="card-body">
+                      <p>
+                        <strong>To:</strong>
+                        <span id="preview-to">{{ messageForm.phone || "Not specified" }}</span>
+                      </p>
+                      <div
+                        id="preview-content"
+                        v-html="'<p>' + (messageForm.message || 'No message content') + '</p>'"
+                      ></div>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="card">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Message Logs</h5>
+                  <button class="btn btn-sm btn-outline-secondary" @click="clearLogs">Clear</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="message-log" class="overflow-auto" style="max-height: 300px">
+                  <div v-if="messageLogs.length === 0" class="text-center py-4 text-muted">
+                    <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
+                    <p class="mt-2">No activity yet. Send a message to see logs.</p>
+                  </div>
+                  <div
+                    v-for="(msg, index) in messageLogs"
+                    :key="index"
+                    :class="['message', msg.key.fromMe ? 'message-sent' : 'message-received']"
+                  >
+                    {{ msg.message.conversation || "No message content" }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title m-0">Message Preview</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-2" id="preview-recipient">
+                  <strong>To:</strong> <span id="preview-to">-</span>
+                </div>
+                <div class="p-3 bg-light rounded" id="preview-content">
+                  <em class="text-muted">Your message will appear here...</em>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane" id="messages" role="tabpanel" aria-labelledby="messages-tab">
+        <div class="row">
+          <div class="col-md-5">
+            <div class="card">
+              <div class="card-header">
+                <h5>Send Media</h5>
+              </div>
+              <div class="card-body">
+                <form @submit.prevent="sendMedia" id="media-form">
+                  <div class="mb-3">
+                    <label for="media-phone" class="form-label">Phone Number</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="media-phone"
+                      v-model="mediaForm.phone"
+                      placeholder="+1234567890"
+                      required
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="media-type" class="form-label">Media Type</label>
+                    <select class="form-select" id="media-type" v-model="mediaForm.mediaType">
+                      <option value="image">Image</option>
+                      <option value="video">Video</option>
+                      <option value="audio">Audio</option>
+                      <option value="document">Document</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="media-caption" class="form-label">Caption (Optional)</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="media-caption"
+                      v-model="mediaForm.caption"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="media-file" class="form-label">Upload Media File</label>
+                    <input
+                      type="file"
+                      class="form-control"
+                      id="media-file"
+                      @change="handleFileChange"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="media-url" class="form-label">Or Enter Media URL</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="media-url"
+                      v-model="mediaForm.mediaUrl"
+                      @input="handleUrlInput"
+                    />
+                  </div>
+                  <div class="card mb-3">
+                    <div class="card-header">
+                      <h6 class="mb-0">Media Preview</h6>
+                    </div>
+                    <div class="card-body text-center">
+                      <div id="media-preview-placeholder" v-show="!showMediaPreview">
+                        <i class="bi bi-image" style="font-size: 3rem; color: #ccc"></i>
+                        <p class="text-muted mt-2">Select or enter media to preview</p>
+                      </div>
+                      <div
+                        id="media-preview-content"
+                        v-show="showMediaPreview"
+                        v-html="mediaPreviewContent"
+                      ></div>
+                      <div id="media-file-info" class="mt-3 text-start" v-show="showMediaPreview">
+                        <p>
+                          <strong>Name:</strong>
+                          <span id="media-file-name">{{ mediaFileInfo.name }}</span>
+                        </p>
+                        <p>
+                          <strong>Size:</strong>
+                          <span id="media-file-size">{{ mediaFileInfo.size }}</span>
+                        </p>
+                        <p>
+                          <strong>Type:</strong>
+                          <span id="media-file-type">{{ mediaFileInfo.type }}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Send Media</button>
+                  <button type="reset" class="btn btn-secondary ms-2" @click="clearMediaPreview">
+                    Reset
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Media Preview Column -->
+          <div class="col-md-7">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title m-0">Media Preview</h5>
+              </div>
+              <div class="card-body">
+                <div id="media-preview-container" class="text-center p-3 bg-light rounded">
+                  <div id="media-preview-placeholder">
+                    <i class="bi bi-file-earmark-plus media-file-icon"></i>
+                    <p class="mt-2 text-muted">Select a file to preview</p>
+                  </div>
+                  <div id="media-preview-content" style="display: none">
+                    <!-- Preview content will be inserted here -->
+                  </div>
+                  <div id="media-file-info" style="display: none">
+                    <div class="d-flex justify-content-between">
+                      <span id="media-file-name" class="text-truncate"></span>
+                      <span id="media-file-size" class="text-muted"></span>
+                    </div>
+                    <div id="media-file-type" class="text-muted small"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+        <!-- Schedule Message -->
+        <div class="row">
+          <div class="col-md-5">
+            <div class="card">
+              <div class="card-header pb-0 border-bottom-0">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs nav-fill nav-justified" id="schedule-tabs" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button
+                      class="nav-link active"
+                      id="schedule-single-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#schedule-single"
+                      type="button"
+                      role="tab"
+                      aria-controls="home"
+                      aria-selected="true"
+                    >
+                      Schedule Message
+                    </button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button
+                      class="nav-link"
+                      id="schedule-bulk-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#schedule-bulk"
+                      type="button"
+                      role="tab"
+                      aria-controls="profile"
+                      aria-selected="false"
+                    >
+                      Schedule Bulk
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <!-- Tab panes -->
+              <div class="tab-content">
+                <div
+                  class="tab-pane active"
+                  id="schedule-single"
+                  role="tabpanel"
+                  aria-labelledby="home-tab"
+                >
+                  <div class="card-body">
+                    <form @submit.prevent="scheduleMessage" id="schedule-form">
+                      <div class="mb-3">
+                        <label for="schedule-phone" class="form-label">Phone Number</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="schedule-phone"
+                          v-model="scheduleForm.phone"
+                          placeholder="+1234567890"
+                          required
+                        />
+                      </div>
+                      <div class="mb-3">
+                        <label for="schedule-message" class="form-label">Message</label>
+                        <textarea
+                          class="form-control"
+                          id="schedule-message"
+                          v-model="scheduleForm.message"
+                          rows="3"
+                          required
+                        ></textarea>
+                      </div>
+                      <div class="mb-3">
+                        <label for="scheduled-time" class="form-label">Schedule Time</label>
+                        <input
+                          type="datetime-local"
+                          class="form-control"
+                          id="scheduled-time"
+                          v-model="scheduleForm.scheduledTime"
+                          required
+                        />
+                      </div>
+                      <div class="mb-3 form-check">
+                        <input
+                          type="checkbox"
+                          class="form-check-input"
+                          id="isRecurring"
+                          v-model="scheduleForm.isRecurring"
+                        />
+                        <label class="form-check-label" for="isRecurring">Set as recurring</label>
+                      </div>
+                      <div
+                        id="recurringOptions"
+                        v-show="scheduleForm.isRecurring"
+                        class="mb-3 ps-4 border-start"
+                      >
+                        <div class="mb-3">
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="recurringType"
+                              id="daily"
+                              value="daily"
+                              v-model="scheduleForm.recurringType"
+                            />
+                            <label class="form-check-label" for="daily">Daily</label>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="recurringType"
+                              id="weekly"
+                              value="weekly"
+                              v-model="scheduleForm.recurringType"
+                            />
+                            <label class="form-check-label" for="weekly">Weekly</label>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="recurringType"
+                              id="monthly"
+                              value="monthly"
+                              v-model="scheduleForm.recurringType"
+                            />
+                            <label class="form-check-label" for="monthly">Monthly</label>
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              name="recurringType"
+                              id="custom"
+                              value="custom"
+                              v-model="scheduleForm.recurringType"
+                            />
+                            <label class="form-check-label" for="custom">Custom Days</label>
+                          </div>
+                        </div>
+                        <div
+                          id="customDaysSelection"
+                          v-show="scheduleForm.recurringType === 'custom'"
+                          class="mb-3"
+                        >
+                          <label class="form-label">Select Days:</label>
+                          <div class="d-flex flex-wrap gap-2">
+                            <div v-for="day in daysList" :key="day" class="form-check">
+                              <input
+                                class="form-check-input"
+                                type="checkbox"
+                                :id="'day-' + day"
+                                v-model="scheduleForm.selectedDays[day]"
+                              />
+                              <label class="form-check-label" :for="'day-' + day">{{
+                                capitalizeFirstLetter(day)
+                              }}</label>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="mb-3">
+                          <label for="endDate" class="form-label">End Date (Optional)</label>
+                          <input
+                            type="date"
+                            class="form-control"
+                            id="endDate"
+                            v-model="scheduleForm.endDate"
+                          />
+                        </div>
+                      </div>
+                      <button type="submit" class="btn btn-primary">Schedule Message</button>
+                    </form>
+                  </div>
+                </div>
+                <div
+                  class="tab-pane"
+                  id="schedule-bulk"
+                  role="tabpanel"
+                  aria-labelledby="schedule-bulk-tab"
+                >
+                  <div class="card-body">
+                    <form id="bulkMessageForm" @submit.prevent="submitForm">
+                      <div class="mb-1">
+                        <label for="excelFile" class="form-label">Upload Excel File</label>
+                        <input
+                          class="form-control"
+                          type="file"
+                          id="excelFile"
+                          accept=".xlsx,.xls"
+                          @change="handleFileUpload"
+                        />
+                        <small class="text-muted"
+                          >Required columns: to. Optional: name, message, scheduledTime</small
+                        >
+                      </div>
+
+                      <div class="mb-1">
+                        <label for="template" class="form-label">Message Template</label>
+                        <small class="text-muted badge" v-html="parametersInfo"></small>
+                        <textarea
+                          v-model="template"
+                          id="template"
+                          class="form-control"
+                          rows="4"
+                          placeholder="hello {{ name }}"
+                        ></textarea>
+                      </div>
+
+                      <div class="mb-1">
+                        <label class="form-label mb-0 control-label">Time Settings</label>
+                        <div class="row g-1">
+                          <div class="col-md-3 col-6">
+                            <label for="minHour" class="form-label">Start Hour</label>
+                            <input
+                              type="number"
+                              id="minHour"
+                              v-model.number="timeConfig.minHour"
+                              class="form-control form-control-sm"
+                              min="0"
+                              max="23"
+                            />
+                          </div>
+                          <div class="col-md-3 col-6">
+                            <label for="maxHour" class="form-label">End Hour</label>
+                            <input
+                              type="number"
+                              id="maxHour"
+                              v-model.number="timeConfig.maxHour"
+                              class="form-control form-control-sm"
+                              min="0"
+                              max="23"
+                            />
+                          </div>
+                          <div class="col-md-3 col-6">
+                            <label for="minMinute" class="form-label">Start Minute</label>
+                            <input
+                              type="number"
+                              id="minMinute"
+                              v-model.number="timeConfig.minMinute"
+                              class="form-control form-control-sm"
+                              min="0"
+                              max="59"
+                            />
+                          </div>
+                          <div class="col-md-3 col-6">
+                            <label for="maxMinute" class="form-label">End Minute</label>
+                            <input
+                              type="number"
+                              id="maxMinute"
+                              v-model.number="timeConfig.maxMinute"
+                              class="form-control form-control-sm"
+                              min="0"
+                              max="59"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Hidden fields -->
+                      <input type="hidden" name="datajson" :value="JSON.stringify(excelData)" />
+                      <input type="hidden" name="timeConfig" :value="JSON.stringify(timeConfig)" />
+
+                      <div class="mb-1">
+                        <div class="alert alert-info p-1 text-center" v-if="showUploadInfo">
+                          <small>{{ fileDetails }}</small>
+                        </div>
+                        <div
+                          class="alert alert-danger"
+                          v-if="errorMessage"
+                          v-html="errorMessage"
+                        ></div>
+                      </div>
+
+                      <!-- Forward messages to -->
+                      <hr />
+                      <div class="mb-1">
+                        <label for="forwardTo" class="form-label">Forward Messages To</label>
+                        <textarea
+                          id="forwardTo"
+                          class="form-control"
+                          v-model="forwardTo"
+                        ></textarea>
+                        <small class="text-muted"
+                          >Separate multiple phone numbers with commas</small
+                        >
+                      </div>
+
+                      <div class="d-flex justify-content-end align-items-center gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary" :disabled="isSubmitDisabled">
+                          Schedule Messages
+                        </button>
+                        <button type="button" class="btn btn-secondary" @click="resetForm">
+                          Reset
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <!-- Preview Table -->
+            <div class="mb-3" v-if="showPreview">
+              <div class="card" id="previewCard">
+                <div class="card-header">
+                  <h5>Message Preview</h5>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Phone</th>
+                          <th>Name</th>
+                          <th>Message</th>
+                          <th>Scheduled Time</th>
+                        </tr>
+                      </thead>
+                      <tbody id="previewBody">
+                        <tr v-for="(row, index) in previewData" :key="index">
+                          <td>{{ index + 1 }}</td>
+                          <td>{{ row.phone }}</td>
+                          <td>{{ row.name }}</td>
+                          <td>{{ row.message }}</td>
+                          <td>{{ row.scheduledTime }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Schedule Messages</h5>
+                  <button class="btn btn-sm btn-outline-secondary" @click="loadScheduledMessages">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                  </button>
+                </div>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>To</th>
+                        <th>Message</th>
+                        <th>Time</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="scheduled-messages">
+                      <tr v-if="scheduledMessages.length === 0">
+                        <td colspan="4" class="text-center">No scheduled messages.</td>
+                      </tr>
+                      <tr v-for="msg in scheduledMessages" :key="msg.id">
+                        <td>{{ msg.to.replace("@s.whatsapp.net", "") }}</td>
+                        <td>{{ msg.message }}</td>
+                        <td>{{ formatDateTime(msg.scheduledTime) }}</td>
+                        <td>
+                          <button
+                            class="btn btn-sm btn-warning me-2"
+                            @click="editScheduledMessage(msg.id)"
+                          >
+                            <i class="bi bi-pencil"></i>
+                          </button>
+                          <button
+                            class="btn btn-sm btn-danger"
+                            @click="deleteScheduledMessage(msg.id)"
+                          >
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

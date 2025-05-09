@@ -1,0 +1,431 @@
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title m-0">AI Assistant Configuration</h5>
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="ai-enabled"
+            v-model="aiConfig.enabled"
+            @change="updateAIConfig"
+          />
+          <label class="form-check-label" for="ai-enabled">
+            {{ aiConfig.enabled ? "Enabled" : "Disabled" }}
+          </label>
+        </div>
+      </div>
+      <div class="card-body">
+        <form @submit.prevent="updateAIConfig">
+          <div class="mb-3">
+            <label for="ai-instructions" class="form-label">Instructions</label>
+            <textarea
+              class="form-control"
+              id="ai-instructions"
+              v-model="aiConfig.instructions"
+              rows="4"
+              placeholder="Instructions for the AI assistant"
+            ></textarea>
+            <div class="form-text">
+              Provide instructions for how the AI should respond to messages.
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="ai-provider" class="form-label">AI Provider</label>
+            <select class="form-select" id="ai-provider" v-model="aiConfig.provider">
+              <option value="openai">OpenAI</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </div>
+
+          <!-- OpenAI Settings -->
+          <div v-if="aiConfig.provider === 'openai'" class="mb-3 border-start ps-3">
+            <div class="mb-3">
+              <label for="openai-api-key" class="form-label">OpenAI API Key</label>
+              <input
+                type="password"
+                class="form-control"
+                id="openai-api-key"
+                v-model="aiConfig.openaiApiKey"
+                placeholder="sk-..."
+              />
+              <div class="form-text">
+                Your OpenAI API key is stored locally and never sent to our servers.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="openai-model" class="form-label">OpenAI Model</label>
+              <select class="form-select" id="openai-model" v-model="aiConfig.model">
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="gpt-4o">GPT-4o</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- DeepSeek Settings -->
+          <div v-if="aiConfig.provider === 'deepseek'" class="mb-3 border-start ps-3">
+            <div class="mb-3">
+              <label for="deepseek-api-key" class="form-label">DeepSeek API Key</label>
+              <input
+                type="password"
+                class="form-control"
+                id="deepseek-api-key"
+                v-model="aiConfig.deepseekApiKey"
+                placeholder="sk-..."
+              />
+              <div class="form-text">
+                Your DeepSeek API key is stored locally and never sent to our servers.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="deepseek-model" class="form-label">DeepSeek Model</label>
+              <select class="form-select" id="deepseek-model" v-model="aiConfig.model">
+                <option value="deepseek-chat">DeepSeek Chat</option>
+                <option value="deepseek-chat-pro">DeepSeek Chat Pro</option>
+                <option value="deepseek-coder">DeepSeek Coder</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="ai-max-tokens" class="form-label">Max Tokens</label>
+              <input
+                type="number"
+                class="form-control"
+                id="ai-max-tokens"
+                v-model="aiConfig.maxTokens"
+                min="50"
+                max="4000"
+              />
+            </div>
+            <div class="col-md-6">
+              <label for="ai-temperature" class="form-label">Temperature</label>
+              <input
+                type="range"
+                class="form-range"
+                id="ai-temperature"
+                v-model="aiConfig.temperature"
+                min="0"
+                max="1"
+                step="0.1"
+              />
+              <div class="d-flex justify-content-between">
+                <small>Precise (0.0)</small>
+                <small>{{ aiConfig.temperature }}</small>
+                <small>Creative (1.0)</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="ai-context-limit" class="form-label">Context Limit</label>
+            <input
+              type="number"
+              class="form-control"
+              id="ai-context-limit"
+              v-model="aiConfig.contextLimit"
+              min="1"
+              max="50"
+            />
+            <div class="form-text">Number of previous messages to include for context.</div>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="ai-auto-reply"
+              v-model="aiConfig.autoReply"
+            />
+            <label class="form-check-label" for="ai-auto-reply"> Auto-reply to messages </label>
+            <div class="form-text">
+              When enabled, the AI will automatically respond to incoming messages.
+            </div>
+          </div>
+
+          <h6 class="mt-4 mb-3 border-bottom pb-2">Performance Optimization</h6>
+          <!-- Caching Settings -->
+          <div class="mb-3 form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="ai-caching-enabled"
+              v-model="caching.enabled"
+            />
+            <label class="form-check-label" for="ai-caching-enabled">
+              Enable response caching
+            </label>
+            <div class="form-text">
+              Cache AI responses to reduce API costs and improve response times.
+            </div>
+          </div>
+
+          <div v-if="caching && caching.enabled" class="mb-3 border-start ps-3">
+            <div class="mb-3 form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="ai-memory-cache"
+                v-model="caching.useMemoryCache"
+              />
+              <label class="form-check-label" for="ai-memory-cache"> Use memory cache </label>
+              <div class="form-text">
+                Store responses in memory for faster access (cleared on server restart).
+              </div>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="ai-file-cache"
+                v-model="caching.useFileCache"
+              />
+              <label class="form-check-label" for="ai-file-cache"> Use file cache </label>
+              <div class="form-text">
+                Store responses in files for persistence across server restarts.
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="ai-cache-ttl" class="form-label">Cache TTL (hours)</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ai-cache-ttl"
+                  v-model="cacheTtlHours"
+                  min="1"
+                  max="720"
+                />
+                <div class="form-text">Time to live for cached responses (1-720 hours).</div>
+              </div>
+              <div class="col-md-6">
+                <label for="ai-memory-cache-size" class="form-label">Memory Cache Size</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ai-memory-cache-size"
+                  v-model="caching.memoryCacheSize"
+                  min="10"
+                  max="1000"
+                />
+                <div class="form-text">Maximum number of responses to keep in memory.</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <button type="button" class="btn btn-outline-secondary btn-sm" @click="clearCache">
+                <i class="bi bi-trash"></i> Clear Cache
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm ms-2"
+                @click="getCacheStats"
+              >
+                <i class="bi bi-bar-chart"></i> Cache Statistics
+              </button>
+            </div>
+
+            <div v-if="cacheStats" class="mb-3 p-2 bg-light rounded">
+              <h6 class="mb-2">Cache Statistics</h6>
+              <div class="small">
+                <div>
+                  <strong>Memory Cache:</strong>
+                  {{ cacheStats.memoryCacheSize }} items
+                </div>
+                <div>
+                  <strong>File Cache:</strong> {{ cacheStats.fileCacheSize }} items ({{
+                    cacheStats.fileCacheSizeMB
+                  }}
+                  MB)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add to the AI configuration form in views/session-detail.ejs -->
+          <div class="mb-3 form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="ai-simulate-typing"
+              v-model="aiConfig.simulateTyping"
+            />
+            <label class="form-check-label" for="ai-simulate-typing">
+              Simulate typing and reading delays
+            </label>
+            <div class="form-text">
+              Makes responses appear more human-like by adding typing indicators and delays.
+            </div>
+          </div>
+
+          <!-- Add typing simulation settings (shown only when simulateTyping is enabled) -->
+          <div v-if="aiConfig.simulateTyping" class="mb-3 border-start ps-3">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="ai-typing-delay" class="form-label">Typing Speed (ms/character)</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ai-typing-delay"
+                  v-model="aiConfig.typingDelay"
+                  min="10"
+                  max="200"
+                />
+                <div class="form-text">
+                  <small>Lower = faster typing (10-200ms)</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="ai-reading-delay" class="form-label">Reading Speed (ms/word)</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ai-reading-delay"
+                  v-model="aiConfig.readingDelay"
+                  min="50"
+                  max="500"
+                />
+                <div class="form-text">
+                  <small>Lower = faster reading (50-500ms)</small>
+                </div>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="ai-min-delay" class="form-label">Minimum Delay (ms)</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ai-min-delay"
+                  v-model="aiConfig.minDelay"
+                  min="0"
+                  max="5000"
+                />
+              </div>
+              <div class="col-md-6">
+                <label for="ai-max-delay" class="form-label">Maximum Delay (ms)</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="ai-max-delay"
+                  v-model="aiConfig.maxDelay"
+                  min="1000"
+                  max="30000"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save"></i> Save Configuration
+            </button>
+            <button type="button" class="btn btn-outline-secondary" @click="resetAIConfig">
+              <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title m-0">Test AI Assistant</h5>
+      </div>
+      <div class="card-body">
+        <form @submit.prevent="testAI">
+          <div class="mb-3">
+            <label for="test-message" class="form-label">Test Message</label>
+            <textarea
+              class="form-control"
+              id="test-message"
+              v-model="testMessage"
+              rows="3"
+              placeholder="Enter a message to test the AI assistant"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" :disabled="!aiConfig.enabled">
+            <i class="bi bi-send"></i> Test
+          </button>
+        </form>
+
+        <div class="mt-4" v-if="testResult">
+          <h6>AI Response:</h6>
+          <div class="p-3 bg-light rounded">
+            <p class="mb-0">{{ testResult.content }}</p>
+          </div>
+          <div class="mt-2 text-muted small">
+            <span>Model: {{ testResult.model }}</span>
+            <span class="ms-3">Created: {{ new Date(testResult.created).toLocaleString() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title m-0">Conversation History</h5>
+        <div>
+          <button class="btn btn-sm btn-outline-secondary" @click="loadConversations">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+          <button class="btn btn-sm btn-outline-danger ms-2" @click="clearConversationPrompt">
+            <i class="bi bi-trash"></i> Clear
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="contact-select" class="form-label">Select Contact</label>
+          <select
+            class="form-select"
+            id="contact-select"
+            v-model="selectedContact"
+            @change="loadConversationHistory"
+          >
+            <option value="">Select a contact</option>
+            <option v-for="contact in recentContacts" :value="contact.id">
+              {{ contact.name || contact.id.replace("@s.whatsapp.net", "") }}
+            </option>
+          </select>
+        </div>
+
+        <div class="conversation-history" style="max-height: 300px; overflow-y: auto">
+          <div
+            v-if="!selectedContact || conversationHistory.length === 0"
+            class="text-center py-4 text-muted"
+          >
+            <i class="bi bi-chat-dots" style="font-size: 2rem"></i>
+            <p class="mt-2">No conversation history available.</p>
+          </div>
+
+          <div v-for="(msg, index) in conversationHistory" :key="index" class="mb-3">
+            <div
+              :class="['p-2 rounded', msg.role === 'user' ? 'bg-light' : 'bg-primary text-white']"
+            >
+              <div class="small mb-1 text-opacity-75">
+                {{ msg.role === "user" ? "User" : "AI Assistant" }}
+              </div>
+              <div>{{ msg.content }}</div>
+              <div class="small mt-1 text-opacity-75">
+                {{ new Date(msg.timestamp).toLocaleString() }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

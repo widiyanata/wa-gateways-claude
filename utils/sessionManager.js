@@ -269,19 +269,21 @@ exports.createSessionManager = (io) => {
   };
 
   // Update sendMessage function in sessionManager.js
-  const { calculateTypingDelay, delay } = require("./helpers");
+  const { calculateTypingDelay, delay, formatPhoneNumber } = require("./helpers");
 
   const sendMessage = async (sessionId, to, message, options = {}) => {
     try {
       const sock = getSession(sessionId);
 
       // Format phone number
-      const formattedNumber = to.includes("@") ? to : `${to.replace(/[^\d]/g, "")}@s.whatsapp.net`;
+      const formattedNumber = to.includes("@") 
+        ? to 
+        : `${formatPhoneNumber(to)}@s.whatsapp.net`;
 
       // Get AI config for typing simulation settings
       let typingDelay = 0;
 
-      if (!options.skipTypingSimulation) {
+      if (options &&!options.skipTypingSimulation) {
         try {
           const aiConfig = await aiManager.getAIConfig(sessionId);
           if (aiConfig.simulateTyping) {
@@ -736,7 +738,7 @@ exports.createSessionManager = (io) => {
             if (forwardTo.length > 0) {
               for (const number of forwardToArray) {
                 console.log(`Forwarding message to ${number}`);
-                await sendMessage(sessionId, number, message);
+                await sendMessage(sessionId, number, "Diteruskan ke: " + number + "\n" + message);
               }
             }
           }
@@ -1513,7 +1515,9 @@ exports.createSessionManager = (io) => {
       const sock = getSession(sessionId);
 
       // Format phone number
-      const formattedNumber = to.includes("@") ? to : `${to.replace(/[^\d]/g, "")}@s.whatsapp.net`;
+      const formattedNumber = to.includes("@") 
+        ? to 
+        : `${formatPhoneNumber(to)}@s.whatsapp.net`;
 
       // Send presence update
       await sock.sendPresenceUpdate(isTyping ? "composing" : "paused", formattedNumber);

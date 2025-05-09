@@ -315,6 +315,27 @@ const delay = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+function formatPhoneNumber(phoneNumber) {
+  // Convert to string and remove any spaces or non-numeric characters
+  let formatted = String(phoneNumber).trim().replace(/\s+/g, "");
+  
+  // Basic validation
+  if (!/^[0-9+]+$/.test(formatted)) {
+    return formatted; // Return as is if contains invalid characters
+  }
+  
+  // Handle Indonesian numbers starting with 0
+  if (formatted.startsWith("0")) {
+    formatted = "62" + formatted.substring(1);
+  }
+  // Add 62 if number doesn't have country code
+  else if (!formatted.startsWith("+") && !formatted.startsWith("62")) {
+    formatted = "62" + formatted;
+  }
+  
+  return formatted;
+}
+
 module.exports = {
   validateExcelData,
   getRandomTime,
@@ -323,4 +344,5 @@ module.exports = {
   calculateTypingDelay,
   calculateReadingDelay,
   delay,
+  formatPhoneNumber,
 };

@@ -11,7 +11,7 @@ const apiRoutes = require("./routes/api");
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 2222;
 
 // Middleware
 app.use(bodyParser.json());
@@ -75,6 +75,8 @@ app.post("/session/:sessionId/bulk-message", async (req, res) => {
     const template = req.body.template; // Template pesan dari input user
     const { sessionId } = req.params;
     const dataJson = JSON.parse(req.body.datajson);
+    // forward to
+    const forwardTo = req.body.forwardTo;
 
     let messages = [];
     dataJson.forEach(async (item) => {
@@ -82,11 +84,11 @@ app.post("/session/:sessionId/bulk-message", async (req, res) => {
         to: item.to,
         message: helpers.renderTemplate(template, item),
         scheduledTime:
-          helpers.formatDateToYYYYMMDD(item.tanggal) + " " + helpers.getRandomTime(8, 16),
+          helpers.formatDateToYYYYMMDD(item.scheduledTime) + " " + helpers.getRandomTime(8, 16),
       });
     });
 
-    const result = await req.sessionManager.bulkScheduleMessages(sessionId, messages);
+    const result = await req.sessionManager.bulkScheduleMessages(sessionId, messages, forwardTo);
     console.log("bulkScheduleMessages", result);
 
     return res.json({ success: true, message: result });

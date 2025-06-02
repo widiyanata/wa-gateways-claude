@@ -7,6 +7,7 @@ const helpers = require("./helpers");
 
 // Constants
 const SESSIONS_DIR = path.join(process.cwd(), "sessions");
+// const SESSIONS_DIR = path.join("/tmp", "sessions");
 const DEFAULT_CONTEXT_LIMIT = 10; // Number of messages to keep in context
 const DEFAULT_MAX_TOKENS = 150; // Default max tokens for AI response
 

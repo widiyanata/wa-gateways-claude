@@ -225,7 +225,13 @@ router.get("/contacts/:sessionId", async (req, res) => {
 router.post("/schedule-message/:sessionId", async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { to, message, scheduledTime, recurringOptions } = req.body;
+    let { to, message, scheduledTime, recurringOptions } = req.body;
+
+    const destination = req.body.destination;
+
+    if (destination) {
+      to = destination;
+    }
 
     if (!to || !message || !scheduledTime) {
       return res
@@ -387,6 +393,28 @@ router.delete("/:sessionId/messages", async (req, res) => {
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Get message history for a specific session with filters
+router.get("/:sessionId/session-messages", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { status, type, timeRange, page, limit, sortAsc } = req.query;
+
+    const options = {
+      status,
+      type,
+      timeRange,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 50,
+      sortAsc: sortAsc === "true",
+    };
+
+    const history = await req.sessionManager.getSessionMessageHistory(sessionId, options);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

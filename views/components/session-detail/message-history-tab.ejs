@@ -1,0 +1,150 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Message History</h5>
+        <div>
+          <select v-model="historyFilters.timeRange" class="form-select form-select-sm d-inline-block me-2" style="width: auto;">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+          </select>
+          <select v-model="historyFilters.status" class="form-select form-select-sm d-inline-block me-2" style="width: auto;">
+            <option value="">All Statuses</option>
+            <option value="sent">Sent</option>
+            <option value="delivered">Delivered</option>
+            <option value="read">Read</option>
+            <option value="failed">Failed</option>
+            <option value="received">Received</option>
+          </select>
+          <select v-model="historyFilters.type" class="form-select form-select-sm d-inline-block me-2" style="width: auto;">
+            <option value="">All Types</option>
+            <option value="text">Text</option>
+            <option value="media">Media</option>
+          </select>
+          <button @click="resetHistoryFilters" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-x-circle"></i> Reset
+          </button>
+          <button @click="loadMessageHistory" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Direction</th>
+                <th>Contact</th>
+                <th>Type</th>
+                <th>Content</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="historyLoading">
+                <td colspan="7" class="text-center">
+                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                  Loading...
+                </td>
+              </tr>
+              <tr v-else-if="messageHistory.length === 0">
+                <td colspan="7" class="text-center">No messages found</td>
+              </tr>
+              <tr v-for="message in messageHistory" :key="message.id">
+                <td>{{ new Date(message.timestamp).toLocaleString() }}</td>
+                <td>
+                  <span :class="message.direction === 'incoming' ? 'badge bg-warning text-dark' : 'badge bg-secondary'">
+                    {{ message.direction === 'incoming' ? 'Incoming' : 'Outgoing' }}
+                  </span>
+                </td>
+                <td>{{ message.direction === 'incoming' ? message.from : message.to }}</td>
+                <td>{{ message.type === 'text' ? 'Text' : (message.mediaType || 'Media') }}</td>
+                <td>{{ message.type === 'text' ? (message.body || message.message || '-') : `[${message.mediaType || 'Media'}]` }}</td>
+                <td>
+                  <span :class="{
+                    'badge': true,
+                    'bg-primary': message.status === 'sent',
+                    'bg-success': message.status === 'delivered' || message.status === 'received',
+                    'bg-info': message.status === 'read',
+                    'bg-danger': message.status === 'failed',
+                    'bg-secondary': !message.status || message.status === 'unknown'
+                  }">
+                    {{ message.status || 'unknown' }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary" @click="viewMessageDetails(message.id)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav v-if="historyPagination.pages > 1">
+          <ul class="pagination justify-content-center">
+            <li :class="['page-item', { disabled: historyPagination.page === 1 }]">
+              <a class="page-link" href="#" @click.prevent="changeHistoryPage(historyPagination.page - 1)">Previous</a>
+            </li>
+            
+            <!-- First page -->
+            <li :class="['page-item', { active: historyPagination.page === 1 }]">
+              <a class="page-link" href="#" @click.prevent="changeHistoryPage(1)">1</a>
+            </li>
+            
+            <!-- Ellipsis if needed -->
+            <li v-if="historyPagination.page > 3" class="page-item disabled">
+              <a class="page-link" href="#">...</a>
+            </li>
+            
+            <!-- Page before current if not first or second page -->
+            <li v-if="historyPagination.page > 2" :class="['page-item', { active: false }]">
+              <a class="page-link" href="#" @click.prevent="changeHistoryPage(historyPagination.page - 1)">
+                {{ historyPagination.page - 1 }}
+              </a>
+            </li>
+            
+            <!-- Current page if not first page -->
+            <li v-if="historyPagination.page !== 1" class="page-item active">
+              <a class="page-link" href="#">{{ historyPagination.page }}</a>
+            </li>
+            
+            <!-- Page after current if not last or second-to-last page -->
+            <li v-if="historyPagination.page < historyPagination.pages - 1" class="page-item">
+              <a class="page-link" href="#" @click.prevent="changeHistoryPage(historyPagination.page + 1)">
+                {{ historyPagination.page + 1 }}
+              </a>
+            </li>
+            
+            <!-- Ellipsis if needed -->
+            <li v-if="historyPagination.page < historyPagination.pages - 2" class="page-item disabled">
+              <a class="page-link" href="#">...</a>
+            </li>
+            
+            <!-- Last page if not first page -->
+            <li v-if="historyPagination.pages > 1" :class="['page-item', { active: historyPagination.page === historyPagination.pages }]">
+              <a class="page-link" href="#" @click.prevent="changeHistoryPage(historyPagination.pages)">
+                {{ historyPagination.pages }}
+              </a>
+            </li>
+            
+            <li :class="['page-item', { disabled: historyPagination.page === historyPagination.pages }]">
+              <a class="page-link" href="#" @click.prevent="changeHistoryPage(historyPagination.page + 1)">Next</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+

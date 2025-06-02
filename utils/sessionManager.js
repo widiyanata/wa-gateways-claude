@@ -1527,6 +1527,71 @@ exports.createSessionManager = (io) => {
     }
   };
 
+  // Get message history for a specific session
+  const getSessionMessageHistory = async (sessionId, options = {}) => {
+    try {
+      const historyFile = path.join(SESSIONS_DIR, sessionId, "message-history.json");
+
+      if (!(await fs.pathExists(historyFile))) {
+        return { messages: [], pagination: { total: 0, page: 1, limit: options.limit || 50, pages: 0 } };
+      }
+
+      const history = await fs.readJson(historyFile);
+      let messages = [...history.messages];
+
+      // Apply filters
+      if (options.status) {
+        messages = messages.filter((msg) => msg.status === options.status);
+      }
+
+      if (options.type) {
+        messages = messages.filter((msg) => msg.type === options.type);
+      }
+
+      if (options.timeRange) {
+        const now = new Date();
+        if (options.timeRange === "today") {
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          messages = messages.filter((msg) => new Date(msg.timestamp) >= today);
+        } else if (options.timeRange === "week") {
+          const weekAgo = new Date(now);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          messages = messages.filter((msg) => new Date(msg.timestamp) >= weekAgo);
+        } else if (options.timeRange === "month") {
+          const monthAgo = new Date(now);
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          messages = messages.filter((msg) => new Date(msg.timestamp) >= monthAgo);
+        }
+      }
+
+      // Sort messages
+      messages.sort((a, b) => {
+        const timeA = new Date(a.timestamp);
+        const timeB = new Date(b.timestamp);
+        return options.sortAsc ? timeA - timeB : timeB - timeA;
+      });
+
+      // Apply pagination
+      const page = options.page || 1;
+      const limit = options.limit || 50;
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+      const paginatedMessages = messages.slice(startIndex, endIndex);
+
+      return {
+        messages: paginatedMessages,
+        pagination: {
+          total: messages.length,
+          page,
+          limit,
+          pages: Math.ceil(messages.length / limit),
+        }
+      };
+    } catch (error) {
+      throw new Error(`Failed to retrieve session message history: ${error.message}`);
+    }
+  };
+
   return {
     createSession,
     getSession,
@@ -1564,5 +1629,6 @@ exports.createSessionManager = (io) => {
     // Cache features
     clearCache: (sessionId) => aiManager.clearCache(sessionId),
     getCacheStats: () => aiManager.getCacheStats(),
+    getSessionMessageHistory,
   };
 };

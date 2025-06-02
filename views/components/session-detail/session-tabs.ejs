@@ -26,6 +26,18 @@
   <li class="nav-item" role="presentation">
     <button
       class="nav-link"
+      id="history-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#history"
+      type="button"
+      role="tab"
+    >
+      <i class="bi bi-clock-history"></i> Message History
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link"
       id="settings-tab"
       data-bs-toggle="tab"
       data-bs-target="#settings"
@@ -57,6 +69,9 @@
 
   <!-- Logs Tab -->
   <div class="tab-pane fade" id="logs" role="tabpanel"><%- include('logs-tab') %></div>
+  
+  <!-- Message History Tab -->
+  <div class="tab-pane fade" id="history" role="tabpanel"><%- include('message-history-tab') %></div>
 
   <!-- Settings Tab -->
   <div class="tab-pane fade" id="settings" role="tabpanel"><%- include('setting-tab') %></div>

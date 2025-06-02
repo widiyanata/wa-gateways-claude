@@ -47,6 +47,21 @@
       const conversationHistory = ref([]);
       const recentContacts = ref([]);
 
+      // Message History state
+      const messageHistory = ref([]);
+      const historyPagination = ref({
+        total: 0,
+        page: 1,
+        limit: 20,
+        pages: 0
+      });
+      const historyFilters = ref({
+        status: "",
+        type: "",
+        timeRange: "all"
+      });
+      const historyLoading = ref(false);
+
       // Form data
       const messageForm = ref({
         phone: "",
@@ -114,6 +129,170 @@
 
       // Forward message to
       const forwardTo = ref("");
+
+      // Load message history
+      const loadMessageHistory = async () => {
+        try {
+          historyLoading.value = true;
+          
+          const { status, type, timeRange } = historyFilters.value;
+          const page = historyPagination.value.page;
+          const limit = historyPagination.value.limit;
+          
+          let url = `/api/${sessionId}/session-messages?page=${page}&limit=${limit}`;
+          
+          if (status) url += `&status=${status}`;
+          if (type) url += `&type=${type}`;
+          if (timeRange && timeRange !== 'all') url += `&timeRange=${timeRange}`;
+          
+          const response = await fetch(url);
+          const result = await response.json();
+          
+          if (result.success && result.data) {
+            messageHistory.value = result.data.messages;
+            historyPagination.value = result.data.pagination;
+          } else {
+            messageHistory.value = [];
+            historyPagination.value = {
+              total: 0,
+              page: 1,
+              limit: 20,
+              pages: 0
+            };
+          }
+        } catch (error) {
+          console.error("Error loading message history:", error);
+          messageHistory.value = [];
+        } finally {
+          historyLoading.value = false;
+        }
+      };
+
+      // View message details
+      const viewMessageDetails = async (messageId) => {
+        try {
+          const response = await fetch(`/api/${sessionId}/messages/${messageId}`);
+          const result = await response.json();
+          
+          if (result.success && result.message) {
+            const message = result.message;
+            
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('historyMessageDetailModal');
+            if (!modal) {
+              modal = document.createElement('div');
+              modal.id = 'historyMessageDetailModal';
+              modal.className = 'modal fade';
+              modal.setAttribute('tabindex', '-1');
+              modal.setAttribute('aria-hidden', 'true');
+              
+              document.body.appendChild(modal);
+            }
+            
+            // Format message details
+            const time = new Date(message.timestamp).toLocaleString();
+            const recipient = message.direction === 'incoming' ? message.from : message.to;
+            const content = message.type === 'text' ? 
+              message.body || message.message || '-' : 
+              `[${message.mediaType || 'Media'}]`;
+            
+            // Populate modal content
+            modal.innerHTML = `
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Message Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="card mb-3">
+                      <div class="card-header">
+                        <strong>Message Content</strong>
+                      </div>
+                      <div class="card-body">
+                        ${message.type === 'text' ? 
+                          `<p>${content}</p>` : 
+                          `<div class="text-center">
+                            <p>[${message.mediaType || 'Media'} content]</p>
+                            ${message.mediaUrl ? `<img src="${message.mediaUrl}" class="img-fluid mb-2" style="max-height: 300px;">` : ''}
+                          </div>`
+                        }
+                      </div>
+                    </div>
+                    
+                    <div class="card">
+                      <div class="card-header">
+                        <strong>Details</strong>
+                      </div>
+                      <div class="card-body">
+                        <table class="table table-sm">
+                          <tbody>
+                            <tr>
+                              <th scope="row">Direction</th>
+                              <td>${message.direction === 'incoming' ? 'Incoming' : 'Outgoing'}</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">${message.direction === 'incoming' ? 'From' : 'To'}</th>
+                              <td>${recipient}</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">Time</th>
+                              <td>${time}</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">Status</th>
+                              <td>${message.status || 'Unknown'}</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">Type</th>
+                              <td>${message.type}${message.mediaType ? ` (${message.mediaType})` : ''}</td>
+                            </tr>
+                            <tr>
+                              <th scope="row">Message ID</th>
+                              <td>${message.id}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            // Show modal
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+          } else {
+            showStatusModal("Error", "Failed to load message details");
+          }
+        } catch (error) {
+          console.error('Error loading message details:', error);
+          showStatusModal("Error", `Error loading message details: ${error.message}`);
+        }
+      };
+
+      // Reset history filters
+      const resetHistoryFilters = () => {
+        historyFilters.value = {
+          status: "",
+          type: "",
+          timeRange: "all"
+        };
+        historyPagination.value.page = 1;
+        loadMessageHistory();
+      };
+
+      // Change history page
+      const changeHistoryPage = (page) => {
+        if (page > 0 && page <= historyPagination.value.pages) {
+          historyPagination.value.page = page;
+          loadMessageHistory();
+        }
+      };
 
       // Computed properties
       const isSubmitDisabled = computed(() => {
@@ -1044,6 +1223,7 @@
         loadScheduledMessages();
         loadAIConfig();
         loadRecentContacts();
+        loadMessageHistory();
 
         // Set up socket listeners
         socket.on(`qr.${sessionId}`, (data) => {
@@ -1065,6 +1245,8 @@
 
         socket.on(`${sessionId}.message`, (message) => {
           messageLogs.value = message.messages.map((msg) => msg).reverse();
+          // Refresh message history when new messages arrive
+          loadMessageHistory();
         });
       });
 
@@ -1116,6 +1298,12 @@
         { deep: true }
       );
 
+      // Watch for changes to history filters
+      watch(historyFilters, () => {
+        historyPagination.value.page = 1;
+        loadMessageHistory();
+      }, { deep: true });
+
       return {
         // State
         sessionConnected,
@@ -1140,6 +1328,16 @@
         cacheTtlHours,
         cacheStats,
         caching,
+
+        // Message History
+        messageHistory,
+        historyPagination,
+        historyFilters,
+        historyLoading,
+        loadMessageHistory,
+        viewMessageDetails,
+        resetHistoryFilters,
+        changeHistoryPage,
 
         // Methods
         sendMessage,
